@@ -1,3 +1,12 @@
 node_modules/ 
 .env 
-.env 
+
+# Terraform
+.terraform
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfvars
+
+# Secret Outputs
+*.pem
