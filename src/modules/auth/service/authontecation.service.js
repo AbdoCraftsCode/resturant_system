@@ -38,12 +38,12 @@ export const login = asyncHandelr(async (req, res, next) => {
 
     const access_Token = generatetoken({
         payload: { id: checkUser._id },
-        signature: checkUser.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
+        // signature: checkUser.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
     });
 
     const refreshToken = generatetoken({
         payload: { id: checkUser._id },
-        signature: checkUser.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
+        // signature: checkUser.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
         expiresIn: 31536000,
     });
 
@@ -98,12 +98,12 @@ export const loginwithGmail = asyncHandelr(async (req, res, next) => {
 
     const access_Token = generatetoken({
         payload: { id: user._id },
-        signature: user?.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
+        // signature: user?.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
     });
 
     const refreshToken = generatetoken({
         payload: { id: user._id },
-        signature: user?.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
+        // signature: user?.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
         expiresIn: 31536000,
     });
     return successresponse(res, "Login successful", 200, { access_Token, refreshToken })
@@ -116,13 +116,13 @@ export const refreshToken = asyncHandelr(async (req, res, next) => {
 
     const accessToken = generatetoken({
         payload: { id: user._id },
-        signature: user.role === 'Admin' ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
+        // signature: user.role === 'Admin' ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
     });
 
     // 7. إنشاء refresh token جديد
     const newRefreshToken = generatetoken({
         payload: { id: user._id },
-        signature: user.role === 'Admin' ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
+        // signature: user.role === 'Admin' ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
         expiresIn: 31536000, // سنة واحدة
     });
 

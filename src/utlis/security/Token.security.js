@@ -23,27 +23,10 @@ export const decodedToken = async ({ authorization = "", tokenType = tokenTypes.
     if (!bearer || !token) {
         return next(new Error("Invalid authorization format", { cause: 400 }));
     }
-
- 
-    let accesssignature = "";
-    let refreshsignature = "";
-    switch (bearer) {
-        case 'System':
-            accesssignature = process.env.SYSTEM_ACCESS_TOKEN;
-            refreshsignature = process.env.SYSTEM_REFRESH_TOKEN;
-            break;
-        case 'Bearer':
-            accesssignature = process.env.USER_ACCESS_TOKEN;
-            refreshsignature = process.env.USER_REFRESH_TOKEN;
-            break;
-        default:
-            return next(new Error("Invalid bearer type", { cause: 400 }));
-    }
-
  
     const decoded = verifytoken({
         token,
-        signature: tokenType === tokenTypes.access ? accesssignature : refreshsignature
+        signature: process.env.JWT_SECRET,
     });
     if (!decoded?.id) {
         return next(new Error("Invalid token", { cause: 401 }));
@@ -67,7 +50,7 @@ export const decodedToken = async ({ authorization = "", tokenType = tokenTypes.
 };
 
 
-export const generatetoken = ({ payload = {}, signature = process.env.USER_ACCESS_TOKEN, expiresIn = parseInt(process.env.expiresIn) } = {}) => {
+export const generatetoken = ({ payload = {}, signature = process.env.JWT_SECRET, expiresIn = parseInt(process.env.expiresIn) } = {}) => {
     const token = jwt.sign(payload, signature, { expiresIn });
     return token;
 };
