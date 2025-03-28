@@ -6,6 +6,7 @@ node_modules/
 *.tfstate
 *.tfstate.backup
 *.tfplan
+*.tfvars
 
 # Secret Outputs
 *.pem
