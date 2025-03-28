@@ -1,4 +1,5 @@
 import * as dbservice from "../../../DB/dbservice.js"
+import { AdvirtModel } from "../../../DB/models/advertise.model.js";
 import { BranchModel } from "../../../DB/models/branch.model.js";
 import { CategoryModel } from "../../../DB/models/Category.model.js";
 
@@ -75,55 +76,54 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
 
  
 export const getProducts = asyncHandelr(async (req, res, next) => {
-    const { lang, categoryId, productName, page = 1, limit = 10 } = req.query;
+    const { categoryId, page = 1, limit = 10 } = req.query;
 
-    if (!categoryId) {
-        return next(new Error("❌ يجب إدخال معرف التصنيف (categoryId)!", { cause: 400 }));
-    }
-
-    const validLang = lang && ["en", "ar"].includes(lang) ? lang : "en";
-    const pageNumber = Math.max(1, parseInt(page)); // لا يقل عن 1
-    const limitNumber = Math.max(1, parseInt(limit)); // لا يقل عن 1
+    const pageNumber = Math.max(1, parseInt(page));
+    const limitNumber = Math.max(1, parseInt(limit));
     const skip = (pageNumber - 1) * limitNumber;
 
-    let filter = { category: categoryId };
+    let filter = {};
+    let populateCategory = null;
 
-    if (productName) {
-        const regex = new RegExp(productName, "i");
-        filter.$or = [
-            { [`name1.${validLang}`]: { $regex: regex } },
-            { [`name2.${validLang}`]: { $regex: regex } }
-        ];
+    if (categoryId) {
+        filter.category = categoryId;
+        populateCategory = { path: "category", select: "name" }; // سيتم استخدامه فقط إذا وُجد categoryId
     }
 
-    const totalProducts = await ProductModel.countDocuments(filter); // 🔹 حساب عدد المنتجات الكلي
+    const totalProducts = await ProductModel.countDocuments(filter);
 
-    const products = await ProductModel.find(filter)
-        .populate("category", `name.${validLang}`)
+    const query = ProductModel.find(filter)
         .select([
-            `name1.${validLang}`,
-            `name2.${validLang}`,
-            `description.${validLang}`,
-            `quantity.${validLang}`,
+            "name1",
+            "name2",
+            "description",
+            "quantity",
             "newprice",
             "oldprice",
+            "country",
             "image"
         ])
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber);
 
-    if (products.length === 0) {
+    // إضافة populate فقط إذا وُجد categoryId
+    if (populateCategory) {
+        query.populate(populateCategory);
+    }
+
+    const products = await query.exec();
+
+    if (categoryId && products.length === 0) {
         return next(new Error("❌ لا توجد منتجات متاحة لهذا التصنيف!", { cause: 404 }));
     }
 
     const numberedProducts = products.map((product, index) => ({
-        number: skip + index + 1, // الترقيم بناءً على الصفحة
+        number: skip + index + 1,
         ...product.toObject()
     }));
 
-    return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, {
-        category: products.length > 0 ? products[0].category : null,
+    const responseData = {
         products: numberedProducts,
         pagination: {
             totalProducts,
@@ -131,7 +131,14 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
             currentPage: pageNumber,
             limit: limitNumber
         }
-    });
+    };
+
+   
+    if (categoryId && products.length > 0) {
+        responseData.category = products[0].category;
+    }
+
+    return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
 });
 
 export const getProductswithout = asyncHandelr(async (req, res, next) => {
@@ -309,7 +316,26 @@ export const deleteProductImage = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم حذف الصورة بنجاح!", 200);
 });
+export const cancelOrder = asyncHandelr(async (req, res, next) => {
+    const { orderId } = req.params;
+    const userId = req.user._id;
 
+    
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
+        return next(new Error("❌ الطلب غير موجود!", { cause: 404 }));
+    }
+
+    if (order.user.toString() !== userId.toString() && !req.user.Admin  && !req.user.Owner)  {
+        return next(new Error("❌ ليس لديك صلاحية لحذف هذا الطلب!", { cause: 403 }));
+    }
+
+    //
+    await OrderModel.findByIdAndDelete(orderId);
+
+    return successresponse(res, "✅ تم حذف الطلب بنجاح!", 200);
+});
 
 export const createOrder = asyncHandelr(async (req, res, next) => {
     const { products, address, phone, notes } = req.body;
@@ -340,7 +366,9 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
 });
 
 
-export const cancelOrder = asyncHandelr(async (req, res, next) => {
+
+
+export const cancelOrderr = asyncHandelr(async (req, res, next) => {
     const { orderId } = req.params;
 
     const order = await OrderModel.findOneAndDelete({ _id: orderId, user: req.user._id });
@@ -584,18 +612,18 @@ export const createBranch = asyncHandelr(async (req, res, next) => {
 });
 
 export const getAllBranches = asyncHandelr(async (req, res, next) => {
-    const { lang } = req.query; // 🔹 تحديد اللغة من `query` (ar أو en)
+    // const { lang } = req.query; 
 
     const branches = await BranchModel.find();
 
-    // ✅ إذا تم تحديد لغة، يتم إرجاع الفروع بهذه اللغة فقط
-    const formattedBranches = branches.map(branch => ({
-        name: lang && branch.name[lang] ? branch.name[lang] : branch.name,
-        address: lang && branch.address[lang] ? branch.address[lang] : branch.address,
-        locationLink: branch.locationLink
-    }));
+    
+    // const formattedBranches = branches.map(branch => ({
+    //     name: lang && branch.name[lang] ? branch.name[lang] : branch.name,
+    //     address: lang && branch.address[lang] ? branch.address[lang] : branch.address,
+    //     locationLink: branch.locationLink
+    // }));
 
-    return successresponse(res, "✅ تم جلب جميع الفروع بنجاح!", 200, formattedBranches);
+    return successresponse(res, "✅ تم جلب جميع الفروع بنجاح!", 200, branches);
 });
 
 
@@ -615,6 +643,35 @@ export const deleteBranch = asyncHandelr(async (req, res, next) => {
     await branch.deleteOne();
 
     return successresponse(res, "✅ تم حذف الفرع بنجاح!", 200);
+});
+
+
+
+export const createImages = asyncHandelr(async (req, res, next) => {
+    console.log("User Data:", req.user);
+
+    
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can create products.", { cause: 403 }));
+    }
+
+ 
+    if (!req.files || req.files.length === 0) {
+        return next(new Error("❌ يجب رفع صورة واحدة على الأقل!", { cause: 400 }));
+    }
+
+
+    const images = await Promise.all(req.files.map(async (file) => {
+        const uploadedImage = await cloud.uploader.upload(file.path, { folder: `products/${req.user._id}` });
+        return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
+    }));
+
+    const product = await AdvirtModel.create({
+    
+        image: images
+    });
+
+    return successresponse(res, "✅ تم رفع الصور بنجاح بواسطه مستر عبده!", 201);
 });
 
 

@@ -61,16 +61,9 @@ export const updateCategory = asyncHandelr(async (req, res, next) => {
 
 
 export const getCategories = asyncHandelr(async (req, res, next) => {
-    const { lang } = req.query; 
-
-    if (!["ar", "en"].includes(lang)) {
-        return next(new Error("Invalid language parameter, use 'ar' or 'en'", { cause: 400 }));
-    }
-
     const categories = await dbservice.findAll({
         model: CategoryModel,
-   
-        select: `name.${lang} image secure_url public_id updatedBy createdAt updatedAt`
+        select: 'name image secure_url public_id updatedBy createdAt updatedAt'
     });
 
     if (!categories.length) {

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { endpoint } from "./production.authrize.js";
-import { cancelOrder, createAdminByOwner, createBranch, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllOrders, getProducts, getProductswithout, searchUsersByName, sendNotificationToUser, updateAdminByOwner, updateProduct } from "./service/production.service.js";
+import { cancelOrder, createAdminByOwner, createBranch, createImages, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllOrders, getProducts, getProductswithout, searchUsersByName, sendNotificationToUser, updateAdminByOwner, updateProduct } from "./service/production.service.js";
 
 const router = Router()
 
@@ -13,14 +13,20 @@ router.post("/createProduct",
     uploadCloudFile(fileValidationTypes.image).array("image", 3),
    createProduct
 )
+router.post("/createImages/admin",
+    authentication(),
+    authorization(endpoint.create),
+    uploadCloudFile(fileValidationTypes.image).array("image", 3),
+    createImages
+)
 router.patch("/updateProduct/:productId",
     authentication(),
     authorization(endpoint.update),
     uploadCloudFile(fileValidationTypes.image).array("image", 3),
     updateProduct
 )
-router.get("/getProducts", getProducts)
-router.get("/getProductswithout", getProductswithout)
+router.post("/getProducts", getProducts)
+router.post("/getProductswithout", getProductswithout)
 router.get("/getAllBranches/admin", getAllBranches)
 router.get("/getAllAdmins/admin", getAllAdmins)
 router.get("/getAllOrders", getAllOrders)

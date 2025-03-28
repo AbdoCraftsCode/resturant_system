@@ -131,45 +131,39 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
 });
 
 export const getAllUsers = asyncHandelr(async (req, res, next) => {
-    let { page, limit, lang } = req.query;
+    let { page, limit } = req.query;
 
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
-    let skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    // ✅ جلب المستخدمين الذين لديهم role = "user"
-    const users = await Usermodel.find({ role: "User"})
+    // ✅ جلب المستخدمين مع تصفية الـ role
+    const users = await Usermodel.find({ role: "User" })
         .skip(skip)
         .limit(limit)
-        .select("firstName lastName email mobileNumber city role notifications");
+        .select("firstName lastName email mobileNumber city role notifications")
+        .lean(); // إضافة lean() لتحويل النتيجة إلى كائن عادي
 
-    // ✅ تصفية الإشعارات حسب اللغة المحددة
-    const usersWithFilteredNotifications = users.map(user => {
-        let notifications = user.notifications.map(notification => ({
-            title: notification.title[lang] || notification.title["en"],
-            message: notification.message[lang] || notification.message["en"],
-           
-        }));
-
-        return {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            mobileNumber: user.mobileNumber,
-            city: user.city,
-       
-         
-        };
-    });
-
-    // 🔥 حساب العدد الإجمالي للمستخدمين الذين لديهم role = "user"
+    // 🔥 حساب العدد الإجمالي
     const totalUsers = await Usermodel.countDocuments({ role: "User" });
 
+    
+    const formattedUsers = users.map(user => ({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        city: user.city,
+        role: user.role,
+    
+    }));
+
     return successresponse(res, {
+        message: "Users retrieved successfully",
         totalUsers,
         currentPage: page,
         totalPages: Math.ceil(totalUsers / limit),
-        users: usersWithFilteredNotifications
+        users: formattedUsers
     });
 });
 
@@ -201,7 +195,7 @@ export const Getprofiledata = asyncHandelr(async (req, res, next) => {
 })
 
 
-// ✅ إنشاء رسالة جديدة
+
 export const createMessage = async (req, res, next) => {
     try {
         const { firstName, lastName, phone, email, message } = req.body;
@@ -221,7 +215,7 @@ export const createMessage = async (req, res, next) => {
     }
 };
 
-// ✅ جلب جميع الرسائل
+
 export const getAllMessages = async (req, res, next) => {
     try {
         const messages = await MessageModel.find().sort({ createdAt: -1 });

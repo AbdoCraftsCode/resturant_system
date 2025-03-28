@@ -25,20 +25,20 @@ export const decodedToken = async ({ authorization = "", tokenType = tokenTypes.
     }
 
  
-    let accesssignature = "";
-    let refreshsignature = "";
-    switch (bearer) {
-        case 'System':
-            accesssignature = process.env.SYSTEM_ACCESS_TOKEN;
-            refreshsignature = process.env.SYSTEM_REFRESH_TOKEN;
-            break;
-        case 'Bearer':
-            accesssignature = process.env.USER_ACCESS_TOKEN;
-            refreshsignature = process.env.USER_REFRESH_TOKEN;
-            break;
-        default:
-            return next(new Error("Invalid bearer type", { cause: 400 }));
-    }
+    // let accesssignature = "";
+    // let refreshsignature = "";
+    // switch (bearer) {
+    //     case 'System':
+    //         accesssignature = process.env.SYSTEM_ACCESS_TOKEN;
+    //         refreshsignature = process.env.SYSTEM_REFRESH_TOKEN;
+    //         break;
+    //     case 'Bearer':
+    //         accesssignature = process.env.USER_ACCESS_TOKEN;
+    //         refreshsignature = process.env.USER_REFRESH_TOKEN;
+    //         break;
+    //     default:
+    //         return next(new Error("Invalid bearer type", { cause: 400 }));
+    // }
 
  
     const decoded = verifytoken({
