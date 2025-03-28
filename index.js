@@ -7,7 +7,6 @@ import { Server } from "socket.io";
 
 import { authenticationSocket, authorization } from "./src/middlewere/auth.socket.middlewere.js";
 import { scketConnections } from "./src/DB/models/User.model.js";
-import { disconnect } from "node:process";
 import { runIo } from "./src/modules/chat/chat.socket.controller.js";
 
 
