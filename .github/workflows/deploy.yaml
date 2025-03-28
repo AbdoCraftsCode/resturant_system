@@ -1,0 +1,43 @@
+name: Deployment Production
+on:
+  push:
+    branches:
+      - main
+      
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: production
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Production
+        run: |
+          docker compose down
+
+          PORT='${{ secrets.PORT }}' \
+          MOOD='${{ secrets.MOOD }}' \
+          EXPIRESIN='${{ secrets.EXPIRESIN }}' \
+          USER_ACCESS_TOKEN='${{ secrets.USER_ACCESS_TOKEN }}' \
+          USER_REFRESH_TOKEN='${{ secrets.USER_REFRESH_TOKEN }}' \
+          SYSTEM_ACCESS_TOKEN='${{ secrets.SYSTEM_ACCESS_TOKEN }}' \
+          SYSTEM_REFRESH_TOKEN='${{ secrets.SYSTEM_REFRESH_TOKEN }}' \
+          CIENT_I='${{ secrets.CIENT_I }}' \
+          api_secret='${{ secrets.api_secret }}' \
+          api_key='${{ secrets.api_key }}' \
+          cloud_name='${{ secrets.cloud_name }}' \
+          DB_URL='${{ secrets.DB_URL }}' \
+          SALT='${{ secrets.SALT }}' \
+          EMAIL='${{ secrets.EMAIL }}' \
+          EMAIL_PASSWORD='${{ secrets.EMAIL_PASSWORD }}' \
+          expiresIn='${{ secrets.expiresIn }}' \
+          CRYPTO_SECRET_KEY='${{ secrets.CRYPTO_SECRET_KEY }}' \
+          AUTHENTICA_API_KEY='${{ secrets.AUTHENTICA_API_KEY }}' \
+          AUTHENTICA_VERIFY_URL='${{ secrets.AUTHENTICA_VERIFY_URL }}' \
+          AUTHENTICA_OTP_URL='${{ secrets.AUTHENTICA_OTP_URL }}' \
+          docker compose up -d
+          
+      - name: Check Running Containers
+        run: docker ps
