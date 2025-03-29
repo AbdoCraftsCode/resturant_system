@@ -621,17 +621,14 @@ export const createBranch = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "✅ تم إنشاء الفرع بنجاح!", 201, );
 });
 
-
 export const getAllBranches = asyncHandelr(async (req, res, next) => {
-  
+    const branches = await dbservice.findAll({
+        model: BranchModel
+    });
 
-    const branches = await BranchModel.find();
-
-    
-  
-
-    return successresponse(res, "✅ تم جلب جميع الفروع بنجاح!", 200, branches);
+    return successresponse(res, "✅ تم جلب جميع الفروع بنجاح!", 200, { branches: branches || [] });
 });
+
 
 
 export const deleteBranch = asyncHandelr(async (req, res, next) => {
