@@ -11,7 +11,7 @@ const router = Router()
 
 
 router.get("/Getloginuseraccount", authentication(), Getloginuseraccount)
-router.get("/getAllUsers", getAllUsers)
+router.post("/getAllUsers", getAllUsers)
 router.get("/getAllMessages", getAllMessages)
 router.post("/createMessage", createMessage)
 router.post("/addToFavorite", authentication(), addToFavorite)
