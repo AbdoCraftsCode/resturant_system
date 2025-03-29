@@ -50,14 +50,42 @@ export const decodedToken = async ({ authorization = "", tokenType = tokenTypes.
 };
 
 
-export const generatetoken = ({ payload = {}, signature = process.env.JWT_SECRET, expiresIn = parseInt(process.env.expiresIn) } = {}) => {
+
+
+
+export const generatetoken = ({
+    payload = {},
+   
+    signature = process.env.JWT_SECRET,
+    expiresIn = "365d"  // تأكد من أنها 365 يوم كما هو مطلوب
+} = {}) => {
+    console.log("✅ Token Payload:", payload);
+    console.log("✅ Expires In:", expiresIn);
+    
     const token = jwt.sign(payload, signature, { expiresIn });
+    console.log("✅ Generated Token:", token);
+    
     return token;
 };
 
 
-export const verifytoken = ({ token = "", signature = process.env.USER_ACCESS_TOKEN } = {}) => {
+
+export const verifytoken = ({
+    token = "",
+    signature = process.env.JWT_SECRET 
+} = {}) => {
     const decoded = jwt.verify(token, signature);
     return decoded;
 };
+
+// export const generatetoken = ({ payload = {}, signature = process.env.JWT_SECRET,  { expiresIn: "365d" } } = {}) => {
+//     const token = jwt.sign(payload, signature, { expiresIn });
+//     return token;
+// };
+
+
+// export const verifytoken = ({ token = "", signature = process.env.USER_ACCESS_TOKEN } = {}) => {
+//     const decoded = jwt.verify(token, signature);
+//     return decoded;
+// };
 

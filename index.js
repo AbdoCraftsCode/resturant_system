@@ -3,6 +3,7 @@ import bootstap from "./src/app.controller.js"
 import path from "node:path"
 import dotenv from "dotenv"
 dotenv.config({ path: path.resolve("./src/config/.env") })
+console.log("🔹 JWT_SECRET:", process.env.JWT_SECRET);
 import { Server } from "socket.io";
 
 import { authenticationSocket, authorization } from "./src/middlewere/auth.socket.middlewere.js";

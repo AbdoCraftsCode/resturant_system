@@ -589,39 +589,46 @@ export const getAllAdmins = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ قائمة المدراء", 200, { admins: formattedAdmins });
 });
-export const createBranch = asyncHandelr(async (req, res, next) => {
-    const { nameEn, nameAr, addressEn, addressAr, locationLink } = req.body;
 
-    // ✅ التحقق من الصلاحيات (يجب أن يكون المستخدم Owner أو Admin)
+
+export const createBranch = asyncHandelr(async (req, res, next) => {
+    const { name1, name2, address, phone, locationLink } = req.body;
+
+    // ✅ التحقق من صلاحيات المستخدم (يجب أن يكون Owner أو Admin)
     if (!["Owner", "Admin"].includes(req.user.role)) {
         return next(new Error("❌ ليس لديك صلاحية لإنشاء فرع!", { cause: 403 }));
     }
 
-    // ✅ التحقق من إدخال البيانات الأساسية
-    if (!nameEn || !nameAr || !addressEn || !addressAr) {
+    // ✅ التحقق من إدخال جميع البيانات المطلوبة
+    if (!name1 || !name2 || !address || !phone) {
         return next(new Error("❌ جميع الحقول مطلوبة (الاسم والعنوان باللغتين)!", { cause: 400 }));
     }
 
+    // ✅ التحقق من أن الحقول تحتوي على الإنجليزية والعربية
+    if (!name1.en || !name1.ar || !name2.en || !name2.ar || !address.en || !address.ar) {
+        return next(new Error("❌ يجب إدخال جميع الحقول باللغة الإنجليزية والعربية!", { cause: 400 }));
+    }
+
+    // ✅ إنشاء الفرع الجديد
     const branch = await BranchModel.create({
-        name: { en: nameEn, ar: nameAr },
-        address: { en: addressEn, ar: addressAr },
+        name1,
+        name2,
+        address,
+        phone,
         locationLink
     });
 
     return successresponse(res, "✅ تم إنشاء الفرع بنجاح!", 201, );
 });
 
+
 export const getAllBranches = asyncHandelr(async (req, res, next) => {
-    // const { lang } = req.query; 
+  
 
     const branches = await BranchModel.find();
 
     
-    // const formattedBranches = branches.map(branch => ({
-    //     name: lang && branch.name[lang] ? branch.name[lang] : branch.name,
-    //     address: lang && branch.address[lang] ? branch.address[lang] : branch.address,
-    //     locationLink: branch.locationLink
-    // }));
+  
 
     return successresponse(res, "✅ تم جلب جميع الفروع بنجاح!", 200, branches);
 });
@@ -673,6 +680,58 @@ export const createImages = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم رفع الصور بنجاح بواسطه مستر عبده!", 201);
 });
+
+
+export const deleteImage = asyncHandelr(async (req, res, next) => {
+    console.log("User Data:", req.user);
+
+    // التأكد من أن المستخدم لديه الصلاحية لحذف الصور
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can delete images.", { cause: 403 }));
+    }
+
+    const { imageId } = req.body; // الحصول على معرف الصورة
+
+    if (!imageId) {
+        return next(new Error("❌ يجب توفير معرف الصورة (public_id)!", { cause: 400 }));
+    }
+
+    // حذف الصورة من Cloudinary
+    const result = await cloud.uploader.destroy(imageId);
+    if (result.result !== "ok") {
+        return next(new Error("❌ فشل في حذف الصورة من Cloudinary، تحقق من ID الصورة!", { cause: 400 }));
+    }
+
+    const record = await AdvirtModel.findOneAndUpdate(
+        { "image.public_id": imageId }, 
+        { $pull: { image: { public_id: imageId } } }, 
+        { new: true }
+    );
+
+    if (!record) {
+        return next(new Error("❌ لم يتم العثور على الصورة في قاعدة البيانات!", { cause: 404 }));
+    }
+
+    return successresponse(res, "✅ تم حذف الصورة بنجاح من Cloudinary وقاعدة البيانات!", 200);
+});
+
+export const getAllImages = asyncHandelr(async (req, res, next) => {
+    console.log("Fetching all images...");
+
+
+    const records = await AdvirtModel.find({}, "image");
+
+  
+    const images = records.flatMap(record => record.image);
+
+    if (images.length === 0) {
+        return next(new Error("❌ لا توجد صور متاحة!", { cause: 404 }));
+    }
+
+    return successresponse(res, "✅ تم جلب جميع الصور بنجاح!", 200, images);
+});
+
+
 
 
 

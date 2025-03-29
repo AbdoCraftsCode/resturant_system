@@ -44,7 +44,7 @@ export const login = asyncHandelr(async (req, res, next) => {
     const refreshToken = generatetoken({
         payload: { id: checkUser._id },
         // signature: checkUser.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
-        expiresIn: 31536000,
+        expiresIn: "365d"
     });
 
     return successresponse(res, "Done", 200, { access_Token, refreshToken });
@@ -104,7 +104,7 @@ export const loginwithGmail = asyncHandelr(async (req, res, next) => {
     const refreshToken = generatetoken({
         payload: { id: user._id },
         // signature: user?.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
-        expiresIn: 31536000,
+        expiresIn: "365d"
     });
     return successresponse(res, "Login successful", 200, { access_Token, refreshToken })
 
@@ -123,7 +123,7 @@ export const refreshToken = asyncHandelr(async (req, res, next) => {
     const newRefreshToken = generatetoken({
         payload: { id: user._id },
         // signature: user.role === 'Admin' ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
-        expiresIn: 31536000, // سنة واحدة
+        expiresIn: "365d"// سنة واحدة
     });
 
     // 8. إرجاع الرد الناجح
@@ -263,13 +263,13 @@ export const verifyOTP = async (req, res, next) => {
             // ✅ **إنشاء التوكن كما في `login`**
             const access_Token = generatetoken({
                 payload: { id: user._id },
-                signature: user.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
+                // signature: user.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
             });
 
             const refreshToken = generatetoken({
                 payload: { id: user._id },
-                signature: user.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
-                expiresIn: 31536000,
+                // signature: user.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
+                expiresIn: "365d"
             });
 
             return res.json({

@@ -1,13 +1,22 @@
 import mongoose from "mongoose";
 
 const branchSchema = new mongoose.Schema({
-    name: {
-        en: { type: String, required: true, trim: true }, // 🏷️ اسم الفرع بالإنجليزية
-        ar: { type: String, required: true, trim: true }  // 🏷️ اسم الفرع بالعربية
+    name1: {
+        en: { type: String,  trim: true }, // 🏷️ اسم الفرع بالإنجليزية
+        ar: { type: String, trim: true }  // 🏷️ اسم الفرع بالعربية
     },
+    name2: {
+        en: { type: String,  trim: true }, // 🏷️ اسم الفرع بالإنجليزية
+        ar: { type: String,  trim: true }  // 🏷️ اسم الفرع بالعربية
+    },
+ 
     address: {
-        en: { type: String, required: true, trim: true }, // 🏠 العنوان بالإنجليزية
-        ar: { type: String, required: true, trim: true }  // 🏠 العنوان بالعربية
+        en: { type: String,  trim: true }, // 🏠 العنوان بالإنجليزية
+        ar: { type: String,  trim: true }  // 🏠 العنوان بالعربية
+    },
+
+    phone: {
+        type: Number,
     },
     locationLink: {
         type: String,

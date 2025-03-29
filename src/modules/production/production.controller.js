@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { endpoint } from "./production.authrize.js";
-import { cancelOrder, createAdminByOwner, createBranch, createImages, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllOrders, getProducts, getProductswithout, searchUsersByName, sendNotificationToUser, updateAdminByOwner, updateProduct } from "./service/production.service.js";
+import { cancelOrder, createAdminByOwner, createBranch, createImages, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllOrders, getProducts, getProductswithout, searchUsersByName, sendNotificationToUser, updateAdminByOwner, updateProduct } from "./service/production.service.js";
 
 const router = Router()
 
@@ -26,6 +26,7 @@ router.patch("/updateProduct/:productId",
     updateProduct
 )
 router.post("/getProducts", getProducts)
+router.get("/getAllImages", getAllImages)
 router.post("/getProductswithout", getProductswithout)
 router.get("/getAllBranches/admin", getAllBranches)
 router.get("/getAllAdmins/admin", getAllAdmins)
@@ -40,6 +41,7 @@ router.patch("/updateAdminByOwner/:adminId/admin", authentication(), updateAdmin
 router.post("/sendNotificationToUser/admin", authentication(), authorization(endpoint.create),sendNotificationToUser)
 
 router.delete("/cancelOrder/:orderId", authentication(), cancelOrder)
+router.delete("/deleteImage/admin", authentication(), deleteImage)
 router.delete("/deleteProductImage", authentication(),authorization(endpoint.delete),deleteProductImage)
 router.delete("/deleteProduct/:productId",authentication(),authorization(endpoint.delete),deleteProduct)
 
