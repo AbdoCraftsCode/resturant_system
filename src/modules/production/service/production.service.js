@@ -725,7 +725,7 @@ export const getAllImages = asyncHandelr(async (req, res, next) => {
         return next(new Error("❌ لا توجد صور متاحة!", { cause: 404 }));
     }
 
-    return successresponse(res, "✅ تم جلب جميع الصور بنجاح!", 200, images);
+    return successresponse(res, "✅ تم جلب جميع الصور بنجاح!", 200, { images: images || [] });
 });
 
 
