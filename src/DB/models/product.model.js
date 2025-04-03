@@ -12,10 +12,36 @@ const productSchema = new mongoose.Schema(
             en: { type: String, required: true, trim: true },
             ar: { type: String, required: true, trim: true }
         },
+     
+
         country: {
             en: { type: String, required: true, trim: true },
             ar: { type: String, required: true, trim: true }
         },
+        animalTypes: [{ type: String, trim: true }],
+
+        stoargecondition: {
+            en: { type: String, },
+            ar: { type: String, }
+
+
+        },
+
+
+        tableData: [{
+            name: {
+                en: { type: String, required: true, trim: true },
+                ar: { type: String, required: true, trim: true }
+            },
+            value: {
+                en: { type: String, required: true, trim: true },
+                ar: { type: String, required: true, trim: true }
+            }
+        }],
+    
+    
+
+      
         newprice: { type: Number, required: true },
         oldprice: { type: Number, required: true },
         description: {
@@ -33,8 +59,14 @@ const productSchema = new mongoose.Schema(
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Category",
-            required: true
+      
         },
+        Department: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Department",
+        
+        },
+        
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",

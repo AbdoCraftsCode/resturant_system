@@ -29,19 +29,38 @@ const userSchema = new mongoose.Schema(
 
         notifications: [
             {
-                title: {
-                    en: { type: String, required: true },  
-                    ar: { type: String, required: true },  
+                orderDate: {
+                    type: String,
                 },
-                message: {
-                    en: { type: String, required: true },  
-                    ar: { type: String, required: true }  
+                orderDetails: {
+                    en: { type: String, },
+                    ar: { type: String, },
                 },
-                createdAt: { type: Date, default: Date.now } 
+                orderStatus: {
+                    en: { type: String, required: true },
+                    ar: { type: String, required: true },
+                },
+
+                orderPaid: {
+                    type: Number,
+                },
+                remainingAmount: {
+                    type: Number,
+                },
+                orderNumber: {
+                    type: Number,
+                },
+                image: {
+                    secure_url: { type: String, required: true }, // الصورة مطلوبة
+                    public_id: { type: String, required: true }   // مهم لحذف الصور من Cloudinary
+                },
             }
         ],
-   
-      
+        
+       
+
+
+
         emailOTP: String,
         forgetpasswordOTP: String,
         attemptCount: Number,

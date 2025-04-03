@@ -17,8 +17,10 @@ const orderSchema = new mongoose.Schema(
         address: { type: String, required: true },
         phone: { type: String, required: true },
         notes: { type: String },
-            paidAmount: { type: Number, default: 0 },
+        paidAmount: { type: Number, default: 0 },
+        status: { type: String, default: "waiting" },
     },
+  
     { timestamps: true }
 );
 

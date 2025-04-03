@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCategory, deleteCategory, getCategories, updateCategory } from "./service/category.service.js";
+import { createCategory, createdepatment, createSocialMedia, deleteCategory, deletedepartment, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, sendNotificationToUser, updateCategory, updatedepartment, updateNotification, updateSocialMedia } from "./service/category.service.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { endpoint } from "./category.authrize.js";
@@ -12,12 +12,31 @@ router.post("/createCategory",
     uploadCloudFile(fileValidationTypes.image).single("image"),
    createCategory
 )
+router.post("/sendNotificationToUser",
+    authentication(),
+    authorization(endpoint.create),
+    uploadCloudFile(fileValidationTypes.image).single("image"),
+    sendNotificationToUser
+)
+router.post("/updateNotification",
+    authentication(),
+    authorization(endpoint.create),
+    uploadCloudFile(fileValidationTypes.image).single("image"),
+    updateNotification
+)
 
 router.patch("/updateCategory/:categoryId",
     authentication(),
     authorization(endpoint.update),
     uploadCloudFile(fileValidationTypes.image).single("image"),
     updateCategory
+)
+
+router.patch("/updatedepartment/:departmentId",
+    authentication(),
+    authorization(endpoint.update),
+  
+    updatedepartment
 )
 router.delete("/deleteCategory/:categoryId",
     authentication(),
@@ -26,9 +45,23 @@ router.delete("/deleteCategory/:categoryId",
     deleteCategory
 )
 
+router.post("/createdepatment",
+    authentication(),
+    authorization(endpoint.create),
+        createdepatment
+)
 
+router.delete("/deletedepartment/:departmentId",
+    authentication(),
+    authorization(endpoint.delete),
+   
+    deletedepartment
+)
 
-router.post("/getCategory" , getCategories)
-
-
+router.post("/getCategory", getCategories)
+router.post("/updateSocialMedia", updateSocialMedia)
+router.post("/createSocialMedia", createSocialMedia)
+router.get("/getdepartment", getdepartment)
+router.get("/getSocialMedia", getSocialMedia)
+router.get("/getNotificationsByEmail",getNotificationsByEmail)
 export default router

@@ -101,10 +101,10 @@ export const updatepassword = asyncHandelr(async (req, res, next) => {
     })
 })
 
-
+ 
 
 export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
-    const { lang } = req.query; // جلب اللغة من الـ query (مثلاً ?lang=ar أو ?lang=en)
+// جلب اللغة من الـ query (مثلاً ?lang=ar أو ?lang=en)
 
     const user = await dbservice.findOne({
         model: Usermodel,
@@ -116,17 +116,15 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
     }
 
     // ✅ اختيار الإشعارات باللغة المطلوبة
-    const notifications = user.notifications.map(notification => ({
-        title: notification.title?.[lang] || notification.title?.en,
-        message: notification.message?.[lang] || notification.message?.en,
-        createdAt: notification.createdAt
-    }));
+    // const notifications = user.notifications.map(notification => ({
+       
+    // }));
 
     return successresponse(res, "✅ تم جلب بيانات المستخدم بنجاح!", 200, {
         username: user.username,
-        mobileNumber: user.mobileNumber,
+        notifications: user.notifications
       
-        notifications // ✅ إرجاع الإشعارات باللغة المطلوبة
+         // ✅ إرجاع الإشعارات باللغة المطلوبة
     });
 });
 
@@ -490,7 +488,7 @@ export const getUserFavorites = async (req, res, next) => {
         const userId = req.user._id; // استخراج userId من التوكن
 
         const favorites = await FavoriteModel.find({ user: userId })
-            .populate("product", "name1.ar name2.ar newprice oldprice image")
+            .populate("product", "name1 name2 newprice oldprice image")
             .sort({ createdAt: -1 });
 
         if (favorites.length === 0) {

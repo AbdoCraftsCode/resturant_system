@@ -26,28 +26,42 @@ import bcrypt from "bcrypt"
 
 export const createProduct = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
-
+    console.log("User Data:", req.body);
     // التأكد من أن المستخدم لديه الصلاحية لإضافة منتج
     if (!["Admin", "Owner"].includes(req.user.role)) {
         return next(new Error("Unauthorized! Only Admins or Owners can create products.", { cause: 403 }));
     }
 
-    // التأكد من وجود الملفات
+ 
     if (!req.files || req.files.length === 0) {
         return next(new Error("❌ يجب رفع صورة واحدة على الأقل!", { cause: 400 }));
     }
 
-  
     const images = await Promise.all(req.files.map(async (file) => {
         const uploadedImage = await cloud.uploader.upload(file.path, { folder: `products/${req.user._id}` });
         return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
     }));
+
+   
+    let tableData = [];
+    if (req.body.tableData) {
+        try {
+            tableData = JSON.parse(req.body.tableData);
+        } catch (error) {
+            return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
+        }
+    } 
 
     const product = await ProductModel.create({
         name1: {
             en: req.body.name1_en,
             ar: req.body.name1_ar
         },
+        stoargecondition: {
+            en: req.body.stoargecondition_en,
+            ar: req.body.stoargecondition_ar
+        },
+    
         name2: {
             en: req.body.name2_en,
             ar: req.body.name2_ar
@@ -67,16 +81,34 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             ar: req.body.quantity_ar
         },
         category: req.body.categoryId,
+        Department: req.body.departmentId,
         createdBy: req.user._id,
-        image: images 
+        image: images,
+        tableData: tableData.map(item => ({
+            name: {
+                en: item.name_en,
+                ar: item.name_ar
+            },
+            value: {
+                en: item.value_en,
+                ar: item.value_ar
+            }
+        })),
+     
+        animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes) : []
     });
 
     return successresponse(res, "✅ المنتج تم إنشاؤه بنجاح!", 201);
 });
 
+
+
+
+
+
  
 export const getProducts = asyncHandelr(async (req, res, next) => {
-    const { categoryId, page = 1, limit = 10 } = req.query;
+    const { categoryId, departmentId, page = 1, limit = 10 } = req.query;
 
     const pageNumber = Math.max(1, parseInt(page));
     const limitNumber = Math.max(1, parseInt(limit));
@@ -84,10 +116,16 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
 
     let filter = {};
     let populateCategory = null;
+    let populateDepartment = null;
 
     if (categoryId) {
         filter.category = categoryId;
         populateCategory = { path: "category", select: "name" }; // سيتم استخدامه فقط إذا وُجد categoryId
+    }
+
+    if (departmentId) {
+        filter.Department = departmentId;
+        populateDepartment = { path: "Department", select: "name" }; // سيتم استخدامه فقط إذا وُجد departmentId
     }
 
     const totalProducts = await ProductModel.countDocuments(filter);
@@ -101,21 +139,33 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
             "newprice",
             "oldprice",
             "country",
-            "image"
+            "image",
+            "tableData",
+            "stoargecondition",
+            "animalTypes"
         ])
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber);
 
-    // إضافة populate فقط إذا وُجد categoryId
+
     if (populateCategory) {
         query.populate(populateCategory);
+    }
+
+   
+    if (populateDepartment) {
+        query.populate(populateDepartment);
     }
 
     const products = await query.exec();
 
     if (categoryId && products.length === 0) {
         return next(new Error("❌ لا توجد منتجات متاحة لهذا التصنيف!", { cause: 404 }));
+    }
+
+    if (departmentId && products.length === 0) {
+        return next(new Error("❌ لا توجد منتجات متاحة لهذا القسم!", { cause: 404 }));
     }
 
     const numberedProducts = products.map((product, index) => ({
@@ -133,9 +183,12 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
         }
     };
 
-   
     if (categoryId && products.length > 0) {
         responseData.category = products[0].category;
+    }
+
+    if (departmentId && products.length > 0) {
+        responseData.department = products[0].Department;
     }
 
     return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
@@ -232,6 +285,10 @@ export const deleteProduct = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم حذف المنتج وجميع صوره بنجاح!", 200);
 });
+
+
+
+
 export const updateProduct = asyncHandelr(async (req, res, next) => {
     const { productId } = req.params;
 
@@ -244,25 +301,44 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
         return next(new Error("❌ المنتج غير موجود!", { cause: 404 }));
     }
 
-    
     if (!["Admin", "Owner"].includes(req.user.role)) {
         return next(new Error("❌ غير مصرح لك بتعديل المنتجات!", { cause: 403 }));
     }
 
-    let images = [...product.image]; 
+    let images = [...product.image];
     if (req.files && req.files.length > 0) {
-        
         await Promise.all(product.image.map(img => cloud.uploader.destroy(img.public_id)));
-
-        
         images = await Promise.all(req.files.map(async (file) => {
             const uploadedImage = await cloud.uploader.upload(file.path, { folder: `products/${req.user._id}` });
             return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
         }));
     }
 
-   
- const updatedProduct = await ProductModel.findByIdAndUpdate(
+    // معالجة tableData مع تسجيل للتحقق
+    let tableData = product.tableData; // القيمة الافتراضية هي القديمة
+    if (req.body.tableData) {
+        try {
+            console.log("Raw tableData from req.body:", req.body.tableData);
+            const parsedTableData = JSON.parse(req.body.tableData);
+            console.log("Parsed tableData:", parsedTableData);
+            // تحويل البيانات إلى الهيكل المتوقع في السكيما
+            tableData = parsedTableData.map(item => ({
+                name: {
+                    en: item.name_en,
+                    ar: item.name_ar
+                },
+                value: {
+                    en: item.value_en,
+                    ar: item.value_ar
+                }
+            }));
+            console.log("Formatted tableData for MongoDB:", tableData);
+        } catch (error) {
+            return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
+        }
+    }
+
+    const updatedProduct = await ProductModel.findByIdAndUpdate(
         productId,
         {
             name1: {
@@ -284,13 +360,25 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
                 ar: req.body.quantity_ar || product.quantity.ar
             },
             category: req.body.categoryId || product.category,
-            image: images 
+            image: images,
+            tableData: tableData,
+            stoargecondition: {
+                en: req.body.stoargecondition_en || product.stoargecondition.en,
+                ar: req.body.stoargecondition_ar || product.stoargecondition.ar
+            },
+            animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes) : product.animalTypes
         },
         { new: true }
     );
 
     return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200);
 });
+
+
+
+
+
+
 export const deleteProductImage = asyncHandelr(async (req, res, next) => {
     const { productId, publicId } = req.body;
 
@@ -366,8 +454,51 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
 });
 
 
+export const getorder= asyncHandelr(async (req, res, next) => {
+   
+    const orders = await OrderModel.find({ user: req.user._id })
+        .populate("user", "lastName firstName email mobileNumber")
+        .populate("products.productId", "name1 newprice");
+    if (orders.length === 0) {
+        return next(new Error("❌ لا توجد طلبات لهذا المستخدم!", { cause: 404 }));
+    }
+    const addresses = orders.map(order => order.address);
+    return successresponse(res, "✅ جميع الطلبات!", 200, { addresses  });
+});
 
 
+
+
+export const updateOrder = asyncHandelr(async (req, res, next) => {
+    const { orderId } = req.params;
+
+    // التحقق من وجود orderId
+    if (!orderId) {
+        return next(new Error("❌ يجب إدخال معرف الطلب!", { cause: 400 }));
+    }
+
+  
+ 
+
+ 
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+        return next(new Error("❌ الطلب غير موجود!", { cause: 404 }));
+    }
+
+    // تحديث حقل status فقط
+    const updatedOrder = await OrderModel.findByIdAndUpdate(
+        orderId,
+        {
+            status: req.body.status || order.status // تحديث الحالة إذا وُجدت، وإلا تبقى كما هي
+        },
+        { new: true }
+    )
+        .populate("user", "lastName firstName email mobileNumber")
+        .populate("products.productId", "name1 newprice");
+
+    return successresponse(res, "✅ تم تحديث الطلب بنجاح!", 200, );
+});
 export const cancelOrderr = asyncHandelr(async (req, res, next) => {
     const { orderId } = req.params;
 
@@ -381,51 +512,57 @@ export const cancelOrderr = asyncHandelr(async (req, res, next) => {
 });
 
 
-export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
-    const { email, phone, name, titleEn, titleAr, messageEn, messageAr } = req.body;
+// export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
+//     const { email, orderDate, orderDetails, orderStatus, orderPaid, remainingAmount, orderNumber } = req.body;
 
-    console.log("📩 Received Request Body:", req.body);
+//     console.log("📩 Received Request Body:", req.body);
 
-    const admin = await Usermodel.findById(req.user._id);
-    console.log("👤 Admin Info:", admin);
+//     const admin = await Usermodel.findById(req.user._id);
+//     console.log("👤 Admin Info:", admin);
 
-    if (!titleEn || !titleAr || !messageEn || !messageAr) {
-        return next(new Error("❌ جميع حقول الإشعار مطلوبة!", { cause: 400 }));
-    }
+//     if (!email) {
+//         return next(new Error("❌ يجب توفير البريد الإلكتروني (email)!", { cause: 400 }));
+//     }
 
-    // ✅ البحث عن المستخدم بناءً على المعايير المحددة
-    let userFilter = {};
-    if (email) userFilter.email = email;
-    if (phone) userFilter.mobileNumber = phone;
-    if (name) {
-        userFilter.$or = [
-            { firstName: name },
-            { lastName: name }
-        ];
-    }
+//     // ✅ البحث عن المستخدم بناءً على الإيميل فقط
+//     const user = await Usermodel.findOne({ email });
 
-    const user = await Usermodel.findOne(userFilter);
+//     // ❌ التأكد من أن المستخدم موجود قبل المتابعة
+//     if (!user) {
+//         return next(new Error("❌ المستخدم غير موجود في النظام!", { cause: 404 }));
+//     }
 
-    // ❌ التأكد من أن المستخدم موجود قبل المتابعة
-    if (!user) {
-        return next(new Error("❌ المستخدم غير موجود في النظام!", { cause: 404 }));
-    }
+//     // ❌ التأكد من عدم إرسال الإشعار لنفس الشخص
+//     if (user._id.toString() === admin._id.toString()) {
+//         return next(new Error("❌ لا يمكنك إرسال إشعار لنفسك!", { cause: 400 }));
+//     }
 
-    // ❌ التأكد من عدم إرسال الإشعار لنفس الشخص
-    if (user._id.toString() === admin._id.toString()) {
-        return next(new Error("❌ لا يمكنك إرسال إشعار لنفسك!", { cause: 400 }));
-    }
+//     // ✅ التحقق من رفع الصورة باستخدام multer
+//     if (!req.file) {
+//         return next(new Error("❌ يجب رفع صورة!", { cause: 400 }));
+//     }
 
-    // ✅ إضافة الإشعار إلى بيانات المستخدم
-    user.notifications.push({
-        title: { en: titleEn, ar: titleAr },
-        message: { en: messageEn, ar: messageAr }
-    });
+//     // ✅ رفع الصورة إلى Cloudinary بنفس الطريقة في createCategory
+//     const { secure_url, public_id } = await cloud.uploader.upload(req.file.path, { folder: `notifications/${req.user._id}` });
 
-    await user.save();
+//     // ✅ إضافة البيانات الجديدة إلى بيانات المستخدم
+//     user.notifications.push({
+//         orderDate,
+//         orderDetails: { en: req.body["orderDetails[en]"], ar: req.body["orderDetails[ar]"] },
+//         orderStatus: { en: req.body["orderStatus[en]"], ar: req.body["orderStatus[ar]"] },
+//         orderPaid,
+//         remainingAmount,
+//         orderNumber,
+//         image: { secure_url, public_id },
+//     });
 
-    return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 200);
-});
+//     await user.save();
+
+//     return successresponse(res, "✅ تم إرسال البيانات بنجاح!", 200);
+// });
+
+
+
 
 
 export const createAdminByOwner = asyncHandelr(async (req, res, next) => {
@@ -687,7 +824,7 @@ export const deleteImage = asyncHandelr(async (req, res, next) => {
         return next(new Error("Unauthorized! Only Admins or Owners can delete images.", { cause: 403 }));
     }
 
-    const { imageId } = req.body; // الحصول على معرف الصورة
+    const { imageId } = req.body; 
 
     if (!imageId) {
         return next(new Error("❌ يجب توفير معرف الصورة (public_id)!", { cause: 400 }));
