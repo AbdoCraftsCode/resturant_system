@@ -30,6 +30,8 @@ export const createCategory = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "Category created successfully!", 201, );
 });
 
+
+
 export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
     if (!["Admin", "Owner"].includes(req.user.role)) {
@@ -75,7 +77,7 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar
         },
         orderPaid: req.body.orderPaid,
-        orderPoints: req.body.orderPoints,
+       
         remainingAmount: req.body.remainingAmount,
         orderNumber: req.body.orderNumber,
         image: { secure_url, public_id },
@@ -90,6 +92,7 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 201);
 });
+
 
 
 
@@ -127,15 +130,15 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
         return next(new Error("❌ الإشعار غير موجود!", { cause: 404 }));
     }
 
-    // التحقق من وجود الصورة الجديدة ومعالجتها
+   
     if (req.file) {
-        // حذف الصورة القديمة إذا كانت موجودة
+  
         const oldImagePublicId = user.notifications[notificationIndex].image?.public_id;
         if (oldImagePublicId) {
             await cloud.uploader.destroy(oldImagePublicId);
         }
 
-        // رفع الصورة الجديدة
+     
         const uploadResult = await cloud.uploader.upload(req.file.path, { folder: `orderdetails/${req.user._id}` });
         secure_url = uploadResult.secure_url;
         public_id = uploadResult.public_id;
@@ -158,7 +161,7 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar || user.notifications[notificationIndex].orderStatus.ar
         },
         orderPaid: req.body.orderPaid || user.notifications[notificationIndex].orderPaid,
-        orderPoints: req.body.orderPoints || user.notifications[notificationIndex].orderPoints,
+       
         remainingAmount: req.body.remainingAmount || user.notifications[notificationIndex].remainingAmount,
         orderNumber: req.body.orderNumber || user.notifications[notificationIndex].orderNumber,
         image: secure_url ? { secure_url, public_id } : user.notifications[notificationIndex].image,

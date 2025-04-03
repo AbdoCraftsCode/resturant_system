@@ -25,16 +25,17 @@ const userSchema = new mongoose.Schema(
         isBanned: { type: Boolean, default: false },
     
         updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-       
+        Points: {
+            type: Number,
+            default: 0,
+        },
 
         notifications: [
             {
                 orderDate: {
                     type: String,
                 },
-                orderPoints: {
-                    type: String,
-                },
+               
                 orderDetails: {
                     en: { type: String, },
                     ar: { type: String, },

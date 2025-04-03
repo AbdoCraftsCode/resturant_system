@@ -12,63 +12,31 @@ import { FavoriteModel } from "../../../DB/models/favourite.model.js";
 
 
 export const Updateuseraccount = asyncHandelr(async (req, res, next) => {
-    const {
-        lastName, mobileNumber, DOB, gender,
-        firstName } = req.body
-    
-
     const user = await dbservice.findOne({
-
         model: Usermodel,
-        filter: {
+        filter: { email: req.body.email } // تأكد من أن الإيميل موجود
+    });
 
-            _id: req.user._id
-        }
-    })
     if (!user) {
-
-        return next(new Error("user not found in system ", { cause: 404 }))
+        return next(new Error("❌ user not found in system", { cause: 404 }));
     }
 
-
-    const encryptedPhone = encryptData(mobileNumber, process.env.CRYPTO_SECRET_KEY);
-    
-
-    await dbservice.findOneAndUpdate({
-    
+    // تحديث بيانات المستخدم
+    const updatedUser = await dbservice.findOneAndUpdate({
         model: Usermodel,
-        filter: { _id: req.user._id },
-        data: {
+        filter: { email: req.body.email },
+        data: req.body, // تمرير البيانات مباشرة
+        options: { new: true }
+    });
 
-            lastName,
-            DOB,
-            firstName,
-            gender,
-            mobileNumber: encryptedPhone
+    return successresponse(res, "✅ User updated successfully!", 200, );
+});
 
-        },
-        options: {
-            new:true
-        }
-          
-          
-       
-
-})
 
     
 
     
-    return successresponse(res, {
-
-        username: req.user.username,
-        gender: req.user.gender,
-        mobileNumber: req.user.mobileNumber,
-        DOB:req.user.DOB
-     
-        
-     })
-})
+  
 
 export const updatepassword = asyncHandelr(async (req, res, next) => {
     const { oldpassword, password, confirmationpassword } = req.body
@@ -122,6 +90,7 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم جلب بيانات المستخدم بنجاح!", 200, {
         username: user.username,
+        Points: user.Points,
         notifications: user.notifications
       
          // ✅ إرجاع الإشعارات باللغة المطلوبة
