@@ -75,6 +75,7 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar
         },
         orderPaid: req.body.orderPaid,
+        orderPoints: req.body.orderPoints,
         remainingAmount: req.body.remainingAmount,
         orderNumber: req.body.orderNumber,
         image: { secure_url, public_id },
@@ -157,6 +158,7 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar || user.notifications[notificationIndex].orderStatus.ar
         },
         orderPaid: req.body.orderPaid || user.notifications[notificationIndex].orderPaid,
+        orderPoints: req.body.orderPoints || user.notifications[notificationIndex].orderPoints,
         remainingAmount: req.body.remainingAmount || user.notifications[notificationIndex].remainingAmount,
         orderNumber: req.body.orderNumber || user.notifications[notificationIndex].orderNumber,
         image: secure_url ? { secure_url, public_id } : user.notifications[notificationIndex].image,

@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema(
                 orderDate: {
                     type: String,
                 },
+                orderPoints: {
+                    type: String,
+                },
                 orderDetails: {
                     en: { type: String, },
                     ar: { type: String, },
