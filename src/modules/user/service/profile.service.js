@@ -33,7 +33,6 @@ export const Updateuseraccount = asyncHandelr(async (req, res, next) => {
 });
 
 
-    
 
     
   
@@ -122,6 +121,9 @@ export const getAllUsers = asyncHandelr(async (req, res, next) => {
         mobileNumber: user.mobileNumber,
         city: user.city,
         role: user.role,
+        Points: user.Points,
+        notifications: user.notifications,
+
     
     }));
 

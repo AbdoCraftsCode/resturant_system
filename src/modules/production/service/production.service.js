@@ -24,6 +24,7 @@ import bcrypt from "bcrypt"
 
 
 
+
 export const createProduct = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
     console.log("User Data:", req.body);
@@ -102,7 +103,8 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
 });
 
 
-
+[{ "name_en": "Weight", "name_ar": "الوزن", "value_en": "500", "value_ar": "500 " }
+]
 
 
 
