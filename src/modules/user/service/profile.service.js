@@ -107,7 +107,7 @@ export const getAllUsers = asyncHandelr(async (req, res, next) => {
     const users = await Usermodel.find({ role: "User" })
         .skip(skip)
         .limit(limit)
-        .select("firstName lastName email mobileNumber city role notifications")
+        .select("firstName lastName email mobileNumber city role notifications Points")
         .lean(); // إضافة lean() لتحويل النتيجة إلى كائن عادي
 
     // 🔥 حساب العدد الإجمالي
