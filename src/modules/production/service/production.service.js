@@ -103,8 +103,8 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
 });
 
 
-[{ "name_en": "Weight", "name_ar": "الوزن", "value_en": "500", "value_ar": "500 " }
-]
+// [{ "name_en": "Weight", "name_ar": "الوزن", "value_en": "500", "value_ar": "500 " }
+// ]
 
 
 
@@ -447,12 +447,43 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
 
 
 
-export const getAllOrders = asyncHandelr(async (req, res, next) => {
-    const orders = await OrderModel.find()
-        .populate("user", "lastName firstName email mobileNumber")
-        .populate("products.productId", "name1 newprice ");
+// export const getAllOrders = asyncHandelr(async (req, res, next) => {
+//     const orders = await OrderModel.find()
+//         .populate("user", "lastName firstName email mobileNumber")
+//         .populate("products.productId", "name1 newprice ");
 
-    return successresponse(res, "✅ جميع الطلبات!", 200, { orders });
+//     return successresponse(res, "✅ جميع الطلبات!", 200, { orders });
+// });
+
+export const getAllOrders = asyncHandelr(async (req, res, next) => {
+    // Pagination params from query string (مثلاً ?page=2)
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count
+    const totalOrders = await OrderModel.countDocuments();
+
+    // Get orders with pagination and sorting (الأحدث أولاً)
+    const orders = await OrderModel.find()
+        .sort({ createdAt: -1 }) // ترتيب تنازلي حسب وقت الإنشاء
+        .skip(skip)
+        .limit(limit)
+        .populate("user", "lastName firstName email mobileNumber")
+        .populate("products.productId", "name1 newprice");
+
+    // ترقيم الطلبات حسب الترتيب في الصفحة الحالية
+    const numberedOrders = orders.map((order, index) => ({
+        orderNumber: skip + index + 1, // رقم الطلب حسب الصفحة
+        ...order._doc,
+    }));
+
+    return successresponse(res, "✅ جميع الطلبات!", 200, {
+        currentPage: page,
+        totalPages: Math.ceil(totalOrders / limit),
+        totalOrders,
+        orders: numberedOrders,
+    });
 });
 
 

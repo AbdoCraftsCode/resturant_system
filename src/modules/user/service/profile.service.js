@@ -110,7 +110,7 @@ export const getAllUsers = asyncHandelr(async (req, res, next) => {
         .select("firstName lastName email mobileNumber city role notifications Points")
         .lean(); // إضافة lean() لتحويل النتيجة إلى كائن عادي
 
-    // 🔥 حساب العدد الإجمالي
+  
     const totalUsers = await Usermodel.countDocuments({ role: "User" });
 
     
