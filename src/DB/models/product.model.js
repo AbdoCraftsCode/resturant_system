@@ -30,8 +30,8 @@ const productSchema = new mongoose.Schema(
 
         tableData: [{
             name: {
-                en: { type: String, required: true, trim: true },
-                ar: { type: String, required: true, trim: true }
+                en: { type: String,  trim: true },
+                ar: { type: String,  trim: true }
             },
             value: {
                 en: { type: String, required: true, trim: true },
@@ -39,7 +39,10 @@ const productSchema = new mongoose.Schema(
             }
         }],
     
-    
+        order: {
+            type: Number,
+            default: 0
+        },
 
       
         newprice: { type: Number, },

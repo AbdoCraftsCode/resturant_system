@@ -146,7 +146,7 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
             "stoargecondition",
             "animalTypes"
         ])
-        .sort({ createdAt: -1 })
+        .sort({ order: 1 })
         .skip(skip)
         .limit(limitNumber);
 
@@ -195,6 +195,38 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
 });
+
+export const reorderProduct = asyncHandelr(async (req, res, next) => {
+    const { productId, newIndex } = req.body;
+
+    if (!productId || typeof newIndex !== "number") {
+        return next(new Error("❌ يجب إرسال معرف المنتج و الـ index الجديد!", { cause: 400 }));
+    }
+
+    // 1. هات كل المنتجات مرتبة
+    const products = await ProductModel.find().sort({ order: 1 });
+
+    // 2. لاقي المنتج اللي محتاج تحركه
+    const movingProductIndex = products.findIndex(p => p._id.toString() === productId);
+    if (movingProductIndex === -1) {
+        return next(new Error("❌ المنتج غير موجود!", { cause: 404 }));
+    }
+
+    const [movingProduct] = products.splice(movingProductIndex, 1); // شيل المنتج
+
+    // 3. دخله في المكان الجديد
+    products.splice(newIndex, 0, movingProduct);
+
+    // 4. عدل ترتيب كل المنتجات
+    for (let i = 0; i < products.length; i++) {
+        products[i].order = i;
+        await products[i].save();
+    }
+
+    return successresponse(res, "✅ تم تحديث ترتيب المنتج بنجاح!", 200);
+});
+
+
 
 export const getProductswithout = asyncHandelr(async (req, res, next) => {
     const { lang, productName, page = 1, limit = 10 } = req.query;

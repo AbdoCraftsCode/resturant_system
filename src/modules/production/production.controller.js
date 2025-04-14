@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { endpoint } from "./production.authrize.js";
-import { cancelOrder, createAdminByOwner, createBranch, createImages, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllOrders, getorder, getProducts, getProductswithout, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct } from "./service/production.service.js";
+import { cancelOrder, createAdminByOwner, createBranch, createImages, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllOrders, getorder, getProducts, getProductswithout, reorderProduct, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct } from "./service/production.service.js";
 
 const router = Router()
 
@@ -21,7 +21,7 @@ router.post("/createImages/admin",
 )
 
 router.post("/getProducts", getProducts)
-   
+router.post("/reorderProduct", reorderProduct)
 router.patch("/updateOrder/:orderId", authentication(),updateOrder)
 router.get("/getAllImages", getAllImages)
 router.get("/getorder", authentication(),getorder)
