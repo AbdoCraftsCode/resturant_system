@@ -19,8 +19,8 @@ const productSchema = new mongoose.Schema(
             ar: { type: String, required: true, trim: true }
         },
         animalTypes: [{
-            ar: { type: String, trim: true, required: true },
-            en: { type: String, trim: true, required: true }
+            ar: { type: String, trim: true,  },
+            en: { type: String, trim: true,  }
         }],
 
 
