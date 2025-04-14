@@ -96,24 +96,54 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
     });
 });
 
-export const getAllUsers = asyncHandelr(async (req, res, next) => {
-    let { page, limit } = req.query;
+// export const getAllUsers = asyncHandelr(async (req, res, next) => {
+//     let { page, limit } = req.query;
 
-    page = parseInt(page) || 1;
-    limit = parseInt(limit) || 10;
-    const skip = (page - 1) * limit;
+//     page = parseInt(page) || 1;
+//     limit = parseInt(limit) || 10;
+//     const skip = (page - 1) * limit;
 
-    // ✅ جلب المستخدمين مع تصفية الـ role
-    const users = await Usermodel.find({ role: "User" })
-        .skip(skip)
-        .limit(limit)
-        .select("firstName lastName email mobileNumber city role notifications Points")
-        .lean(); // إضافة lean() لتحويل النتيجة إلى كائن عادي
+//     // ✅ جلب المستخدمين مع تصفية الـ role
+//     const users = await Usermodel.find({ role: "User" })
+//         .skip(skip)
+//         .limit(limit)
+//         .select("firstName lastName email mobileNumber city role notifications Points")
+//         .lean(); // إضافة lean() لتحويل النتيجة إلى كائن عادي
 
   
-    const totalUsers = await Usermodel.countDocuments({ role: "User" });
+//     const totalUsers = await Usermodel.countDocuments({ role: "User" });
 
     
+//     const formattedUsers = users.map(user => ({
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         email: user.email,
+//         mobileNumber: user.mobileNumber,
+//         city: user.city,
+//         role: user.role,
+//         Points: user.Points,
+//         notifications: user.notifications,
+
+    
+//     }));
+
+//     return successresponse(res, {
+//         message: "Users retrieved successfully",
+//         totalUsers,
+//         currentPage: page,
+//         totalPages: Math.ceil(totalUsers / limit),
+//         users: formattedUsers
+//     });
+// });
+
+export const getAllUsers = asyncHandelr(async (req, res, next) => {
+    // ✅ جلب المستخدمين مع تصفية الـ role
+    const users = await Usermodel.find({ role: "User" })
+        .select("firstName lastName email mobileNumber city role notifications Points")
+        .lean(); // تحويل النتيجة إلى كائن عادي
+
+    const totalUsers = users.length;
+
     const formattedUsers = users.map(user => ({
         firstName: user.firstName,
         lastName: user.lastName,
@@ -123,19 +153,14 @@ export const getAllUsers = asyncHandelr(async (req, res, next) => {
         role: user.role,
         Points: user.Points,
         notifications: user.notifications,
-
-    
     }));
 
     return successresponse(res, {
         message: "Users retrieved successfully",
         totalUsers,
-        currentPage: page,
-        totalPages: Math.ceil(totalUsers / limit),
         users: formattedUsers
     });
 });
-
 
 
 export const Getprofiledata = asyncHandelr(async (req, res, next) => {

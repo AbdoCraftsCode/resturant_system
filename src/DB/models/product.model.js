@@ -42,8 +42,8 @@ const productSchema = new mongoose.Schema(
     
 
       
-        newprice: { type: Number, required: true },
-        oldprice: { type: Number, required: true },
+        newprice: { type: Number, },
+        oldprice: { type: Number,  },
         description: {
             en: { type: String, required: true },
             ar: { type: String, required: true }

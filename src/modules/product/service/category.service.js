@@ -32,6 +32,70 @@ export const createCategory = asyncHandelr(async (req, res, next) => {
 
 
 
+// export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
+//     console.log("User Data:", req.user);
+//     if (!["Admin", "Owner"].includes(req.user.role)) {
+//         return next(new Error("Unauthorized! Only Admins or Owners can send notifications.", { cause: 403 }));
+//     }
+
+//     if (!req.body.email) {
+//         return next(new Error("❌ يجب توفير البريد الإلكتروني!", { cause: 400 }));
+//     }
+
+//     let secure_url = null;
+//     let public_id = null;
+
+//     // تأكد أن الصورة تم رفعها
+//     if (req.file) {
+//         const uploadResult = await cloud.uploader.upload(req.file.path, { folder: `orderdetails/${req.user._id}` });
+//         secure_url = uploadResult.secure_url;
+//         public_id = uploadResult.public_id;
+//     } else {
+//         return next(new Error("❌ يجب رفع صورة!", { cause: 400 }));
+//     }
+
+//     const user = await Usermodel.findOne({ email: req.body.email });
+
+//     if (!user) {
+//         return next(new Error("❌ المستخدم غير موجود!", { cause: 404 }));
+//     }
+
+//     // التأكد من وجود المدخلات المطلوبة
+//     if (!req.body.orderStatus_en || !req.body.orderStatus_ar) {
+//         return next(new Error("❌ يجب توفير حالة الطلب باللغة العربية والإنجليزية!", { cause: 400 }));
+//     }
+
+//     // إضافة البيانات إلى الـ Array مباشرةً بدون مشاكل
+//     const newNotification = {
+//         orderDate: req.body.orderDate,
+//         orderDetails: {
+//             en: req.body.orderDetails_en,
+//             ar: req.body.orderDetails_ar
+//         },
+//         orderStatus: {
+//             en: req.body.orderStatus_en,
+//             ar: req.body.orderStatus_ar
+//         },
+//         orderPaid: req.body.orderPaid,
+       
+//         remainingAmount: req.body.remainingAmount,
+//         orderNumber: req.body.orderNumber,
+//         ordervalue: req.body.ordervalue,
+//         image: { secure_url, public_id },
+//         updatedBy: req.user._id
+//     };
+
+//     // دفع البيانات الجديدة داخل المصفوفة مباشرةً
+//     user.notifications.push(newNotification);
+
+//     // حفظ التحديثات
+//     await user.save();
+
+//     return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 201);
+// });
+
+
+
 export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
     if (!["Admin", "Owner"].includes(req.user.role)) {
@@ -45,14 +109,13 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
     let secure_url = null;
     let public_id = null;
 
-    // تأكد أن الصورة تم رفعها
+    // ✅ جعل رفع الصورة اختياري
     if (req.file) {
         const uploadResult = await cloud.uploader.upload(req.file.path, { folder: `orderdetails/${req.user._id}` });
         secure_url = uploadResult.secure_url;
         public_id = uploadResult.public_id;
-    } else {
-        return next(new Error("❌ يجب رفع صورة!", { cause: 400 }));
     }
+    // ❌ لا توجد صورة مرفوعة، لكن لن نرجع خطأ الآن
 
     const user = await Usermodel.findOne({ email: req.body.email });
 
@@ -65,7 +128,6 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
         return next(new Error("❌ يجب توفير حالة الطلب باللغة العربية والإنجليزية!", { cause: 400 }));
     }
 
-    // إضافة البيانات إلى الـ Array مباشرةً بدون مشاكل
     const newNotification = {
         orderDate: req.body.orderDate,
         orderDetails: {
@@ -77,24 +139,18 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar
         },
         orderPaid: req.body.orderPaid,
-       
         remainingAmount: req.body.remainingAmount,
         orderNumber: req.body.orderNumber,
-        image: { secure_url, public_id },
+        ordervalue: req.body.ordervalue,
+        image: { secure_url, public_id }, // لو مفيش صورة هتبقى null، مش مشكلة
         updatedBy: req.user._id
     };
 
-    // دفع البيانات الجديدة داخل المصفوفة مباشرةً
     user.notifications.push(newNotification);
-
-    // حفظ التحديثات
     await user.save();
 
     return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 201);
 });
-
-
-
 
 
 
@@ -161,7 +217,7 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
             ar: req.body.orderStatus_ar || user.notifications[notificationIndex].orderStatus.ar
         },
         orderPaid: req.body.orderPaid || user.notifications[notificationIndex].orderPaid,
-       
+        ordervalue: req.body.ordervalue || user.notifications[notificationIndex].ordervalue,
         remainingAmount: req.body.remainingAmount || user.notifications[notificationIndex].remainingAmount,
         orderNumber: req.body.orderNumber || user.notifications[notificationIndex].orderNumber,
         image: secure_url ? { secure_url, public_id } : user.notifications[notificationIndex].image,

@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
         lastName: { type: String },
         city:{ type: String },
 
-        mobileNumber: { type: String },
+        mobileNumber: { type: String }, 
         role: { type: String, enum: Object.values(roletypes),  default: roletypes.User },
         isConfirmed: { type: Boolean, default: false },
         deletedAt: { type: Date },
@@ -48,6 +48,9 @@ const userSchema = new mongoose.Schema(
                 orderPaid: {
                     type: Number,
                 },
+                ordervalue: {
+                    type: Number,
+                },
                 remainingAmount: {
                     type: Number,
                 },
@@ -55,8 +58,8 @@ const userSchema = new mongoose.Schema(
                     type: Number,
                 },
                 image: {
-                    secure_url: { type: String, required: true }, // الصورة مطلوبة
-                    public_id: { type: String, required: true }   // مهم لحذف الصور من Cloudinary
+                    secure_url: { type: String,  }, // الصورة مطلوبة
+                    public_id: { type: String, }   // مهم لحذف الصور من Cloudinary
                 },
             }
         ],
