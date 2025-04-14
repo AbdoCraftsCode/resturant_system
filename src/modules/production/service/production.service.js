@@ -96,7 +96,12 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             }
         })),
      
-        animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes) : []
+        animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes).map(item => ({
+            ar: item.ar,
+            en: item.en
+        })) : []
+
+
     });
 
     return successresponse(res, "✅ المنتج تم إنشاؤه بنجاح!", 201);

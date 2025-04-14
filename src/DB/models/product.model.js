@@ -18,7 +18,11 @@ const productSchema = new mongoose.Schema(
             en: { type: String, required: true, trim: true },
             ar: { type: String, required: true, trim: true }
         },
-        animalTypes: [{ type: String, trim: true }],
+        animalTypes: [{
+            ar: { type: String, trim: true, required: true },
+            en: { type: String, trim: true, required: true }
+        }],
+
 
         stoargecondition: {
             en: { type: String, },
