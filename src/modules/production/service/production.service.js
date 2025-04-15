@@ -492,6 +492,38 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
 //     return successresponse(res, "✅ جميع الطلبات!", 200, { orders });
 // });
 
+
+
+
+
+
+// export const createOrder = asyncHandelr(async (req, res, next) => {
+//     const { products, address, phone, notes } = req.body;
+
+//     if (!products || products.length === 0 || !address || !phone) {
+//         return next(new Error("❌ جميع الحقول مطلوبة!", { cause: 400 }));
+//     }
+
+//     // التحقق هل العنوان سبق استخدامه
+//     const isAddressUsed = await OrderModel.findOne({ user: req.user._id, address });
+
+//     let message = "✅ تم إنشاء الطلب بنجاح!";
+//     if (isAddressUsed) {
+//         message += " 🔁 (العنوان تم استخدامه سابقًا)";
+//     }
+
+//     const newOrder = await OrderModel.create({
+//         user: req.user._id,
+//         products,
+//         address, // ما نقدرش نشيله علشان الـ schema طالبه
+//         phone,
+//         notes
+//     });
+
+//     return successresponse(res, message, 201);
+// });
+
+
 export const getAllOrders = asyncHandelr(async (req, res, next) => {
     // Pagination params from query string (مثلاً ?page=2)
     const page = parseInt(req.query.page) || 1;
@@ -524,18 +556,32 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
 });
 
 
-export const getorder= asyncHandelr(async (req, res, next) => {
+// export const getorder= asyncHandelr(async (req, res, next) => {
    
+//     const orders = await OrderModel.find({ user: req.user._id })
+//         .populate("user", "lastName firstName email mobileNumber")
+//         .populate("products.productId", "name1 newprice");
+//     if (orders.length === 0) {
+//         return next(new Error("❌ لا توجد طلبات لهذا المستخدم!", { cause: 404 }));
+//     }
+//     const addresses = orders.map(order => order.address);
+//     return successresponse(res, "✅ جميع الطلبات!", 200, { addresses  });
+// });
+
+export const getorder = asyncHandelr(async (req, res, next) => {
     const orders = await OrderModel.find({ user: req.user._id })
         .populate("user", "lastName firstName email mobileNumber")
         .populate("products.productId", "name1 newprice");
+
     if (orders.length === 0) {
         return next(new Error("❌ لا توجد طلبات لهذا المستخدم!", { cause: 404 }));
     }
-    const addresses = orders.map(order => order.address);
-    return successresponse(res, "✅ جميع الطلبات!", 200, { addresses  });
-});
 
+    const rawAddresses = orders.map(order => order.address.trim()); // إزالة المسافات
+    const uniqueAddresses = [...new Set(rawAddresses.map(addr => addr.replace(/\s+/g, ' ').trim()))];
+
+    return successresponse(res, "✅ جميع الطلبات!", 200, { addresses: uniqueAddresses });
+});
 
 
 
