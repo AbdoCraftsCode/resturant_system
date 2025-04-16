@@ -225,7 +225,11 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
     };
 
     // استبدال الإشعار القديم بالجديد
-    user.notifications[notificationIndex] = updatedNotification;
+    user.notifications[notificationIndex] = {
+        ...updatedNotification,
+        _id: user.notifications[notificationIndex]._id
+    };
+
 
     // حفظ التحديثات
     await user.save();
