@@ -8,6 +8,7 @@ import * as dbservice from "../../../DB/dbservice.js"
 import { DepartmentModel } from "../../../DB/models/Department3.model.js";
 import Usermodel from "../../../DB/models/User.model.js";
 import { SocialMediaModel } from "../../../DB/models/socialmidia.model.js";
+import { ProductModel } from "../../../DB/models/product.model.js";
 
 export const createCategory = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user); 
@@ -316,29 +317,56 @@ export const getCategories = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "Categories retrieved successfully!", 200, { categories });
 });
 
-export const deleteCategory = asyncHandelr(async (req, res, next) => {
+// export const deleteCategory = asyncHandelr(async (req, res, next) => {
  
-    if (!["Admin", "Owner"].includes(req.user.role)) {
-        return next(new Error("Unauthorized! Only Admins or Owners can delete categories.", { cause: 403 }));
-    }
+//     if (!["Admin", "Owner"].includes(req.user.role)) {
+//         return next(new Error("Unauthorized! Only Admins or Owners can delete categories.", { cause: 403 }));
+//     }
 
    
+//     const category = await CategoryModel.findById(req.params.categoryId);
+//     if (!category) {
+//         return next(new Error("Category not found!", { cause: 404 }));
+//     }
+
+  
+//     if (category.image?.public_id) {
+//         await cloud.uploader.destroy(category.image.public_id);
+//     }
+
+   
+//     await category.deleteOne();
+
+//     return successresponse(res, "Category deleted successfully!", 200);
+// });
+export const deleteCategory = asyncHandelr(async (req, res, next) => {
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(
+            new Error("Unauthorized! Only Admins or Owners can delete categories.", {
+                cause: 403,
+            })
+        );
+    }
+
     const category = await CategoryModel.findById(req.params.categoryId);
     if (!category) {
         return next(new Error("Category not found!", { cause: 404 }));
     }
 
-  
+    // حذف صورة الكاتيجوري من cloudinary
     if (category.image?.public_id) {
         await cloud.uploader.destroy(category.image.public_id);
     }
 
-   
+    // حذف المنتجات المرتبطة بهذه الكاتيجوري
+    await ProductModel.deleteMany({ category: category._id });
+
+
+    // حذف الكاتيجوري نفسه
     await category.deleteOne();
 
     return successresponse(res, "Category deleted successfully!", 200);
 });
-
 
 
 export const createdepatment = asyncHandelr(async (req, res, next) => {
