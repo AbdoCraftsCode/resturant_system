@@ -2,6 +2,8 @@ import * as dbservice from "../../../DB/dbservice.js"
 import { AdvirtModel } from "../../../DB/models/advertise.model.js";
 import { BranchModel } from "../../../DB/models/branch.model.js";
 import { CategoryModel } from "../../../DB/models/Category.model.js";
+import { mixModel } from "../../../DB/models/mix.model.js";
+import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
 
 import { OrderModel } from "../../../DB/models/order.model.js";
 import { ProductModel } from "../../../DB/models/product.model.js";
@@ -67,8 +69,8 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             en: req.body.name2_en,
             ar: req.body.name2_ar
         },
-        newprice: req.body.newprice,
-        oldprice: req.body.oldprice,
+        // newprice: req.body.newprice,
+        // oldprice: req.body.oldprice,
         description: {
             en: req.body.description_en,
             ar: req.body.description_ar
@@ -81,7 +83,7 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             en: req.body.quantity_en,
             ar: req.body.quantity_ar
         },
-        category: req.body.categoryId,
+        // category: req.body.categoryId,
         Department: req.body.departmentId,
         createdBy: req.user._id,
         image: images,
@@ -114,37 +116,120 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
 
 
  
-export const getProducts = asyncHandelr(async (req, res, next) => {
-    const { categoryId, departmentId, page = 1, limit = 10 } = req.query;
+// export const getProducts = asyncHandelr(async (req, res, next) => {
+//     const { categoryId, departmentId, page = 1, limit = 10 } = req.query;
 
-    const pageNumber = Math.max(1, parseInt(page));
-    const limitNumber = Math.max(1, parseInt(limit));
-    const skip = (pageNumber - 1) * limitNumber;
+//     const pageNumber = Math.max(1, parseInt(page));
+//     const limitNumber = Math.max(1, parseInt(limit));
+//     const skip = (pageNumber - 1) * limitNumber;
+
+//     let filter = {};
+//     let populateCategory = null;
+//     let populateDepartment = null;
+
+//     if (categoryId) {
+//         filter.category = categoryId;
+//         populateCategory = { path: "category", select: "name" }; // سيتم استخدامه فقط إذا وُجد categoryId
+//     }
+
+//     if (departmentId) {
+//         filter.Department = departmentId;
+//         populateDepartment = { path: "Department", select: "name" }; // سيتم استخدامه فقط إذا وُجد departmentId
+//     }
+
+//     const totalProducts = await ProductModel.countDocuments(filter);
+
+//     const query = ProductModel.find(filter)
+//         .select([
+//             "name1",
+//             "name2",
+//             "description",
+//             "quantity",
+//             // "newprice",
+//             // "oldprice",
+//             "country",
+//             "image",
+//             "tableData",
+//             "stoargecondition",
+//             "animalTypes"
+//         ])
+//         .sort({ order: 1 })
+//         .skip(skip)
+//         .limit(limitNumber);
+
+
+//     if (populateCategory) {
+//         query.populate(populateCategory);
+//     }
+
+   
+//     if (populateDepartment) {
+//         query.populate(populateDepartment);
+//     }
+
+//     const products = await query.exec();
+
+//     if (categoryId && products.length === 0) {
+//         return next(new Error("❌ لا توجد منتجات متاحة لهذا التصنيف!", { cause: 404 }));
+//     }
+
+//     if (departmentId && products.length === 0) {
+//         return next(new Error("❌ لا توجد منتجات متاحة لهذا القسم!", { cause: 404 }));
+//     }
+
+//     const numberedProducts = products.map((product, index) => ({
+//         number: skip + index + 1,
+//         ...product.toObject()
+//     }));
+
+//     const responseData = {
+//         products: numberedProducts,
+//         pagination: {
+//             totalProducts,
+//             totalPages: Math.ceil(totalProducts / limitNumber),
+//             currentPage: pageNumber,
+//             limit: limitNumber
+//         }
+//     };
+
+//     if (categoryId && products.length > 0) {
+//         responseData.category = products[0].category;
+//     }
+
+//     if (departmentId && products.length > 0) {
+//         responseData.department = products[0].Department;
+//     }
+
+//     return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
+// });
+
+
+
+
+
+
+
+
+
+export const getProducts = asyncHandelr(async (req, res, next) => {
+    const { departmentId } = req.query;
 
     let filter = {};
-    let populateCategory = null;
     let populateDepartment = null;
-
-    if (categoryId) {
-        filter.category = categoryId;
-        populateCategory = { path: "category", select: "name" }; // سيتم استخدامه فقط إذا وُجد categoryId
-    }
 
     if (departmentId) {
         filter.Department = departmentId;
-        populateDepartment = { path: "Department", select: "name" }; // سيتم استخدامه فقط إذا وُجد departmentId
+        populateDepartment = { path: "Department", select: "name" };
     }
 
-    const totalProducts = await ProductModel.countDocuments(filter);
-
-    const query = ProductModel.find(filter)
+    const products = await ProductModel.find(filter)
         .select([
             "name1",
             "name2",
             "description",
             "quantity",
-            "newprice",
-            "oldprice",
+            // "newprice",
+            // "oldprice",
             "country",
             "image",
             "tableData",
@@ -152,47 +237,21 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
             "animalTypes"
         ])
         .sort({ order: 1 })
-        .skip(skip)
-        .limit(limitNumber);
-
-
-    if (populateCategory) {
-        query.populate(populateCategory);
-    }
-
-   
-    if (populateDepartment) {
-        query.populate(populateDepartment);
-    }
-
-    const products = await query.exec();
-
-    if (categoryId && products.length === 0) {
-        return next(new Error("❌ لا توجد منتجات متاحة لهذا التصنيف!", { cause: 404 }));
-    }
+        .populate(populateDepartment || "") // لن يتم تنفيذ populate إذا لم يوجد departmentId
+        .exec();
 
     if (departmentId && products.length === 0) {
         return next(new Error("❌ لا توجد منتجات متاحة لهذا القسم!", { cause: 404 }));
     }
 
     const numberedProducts = products.map((product, index) => ({
-        number: skip + index + 1,
+        number: index + 1,
         ...product.toObject()
     }));
 
     const responseData = {
-        products: numberedProducts,
-        pagination: {
-            totalProducts,
-            totalPages: Math.ceil(totalProducts / limitNumber),
-            currentPage: pageNumber,
-            limit: limitNumber
-        }
+        products: numberedProducts
     };
-
-    if (categoryId && products.length > 0) {
-        responseData.category = products[0].category;
-    }
 
     if (departmentId && products.length > 0) {
         responseData.department = products[0].Department;
@@ -984,7 +1043,115 @@ export const getAllImages = asyncHandelr(async (req, res, next) => {
 
 
 
+export const createMix = asyncHandelr(async (req, res, next) => {
+    console.log("User Data:", req.user);
 
+  
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can create Mix.", { cause: 403 }));
+    }
+
+    const mix = await mixModel.create({
+        Mostawdaa: req.body.Mostawdaa || null,
+        Product: req.body.Product || null,
+        newprice: req.body.newprice,
+        oldprice: req.body.oldprice,
+        quantity: {
+            en: req.body.quantity_en,
+            ar: req.body.quantity_ar
+        }
+    });
+
+    return successresponse(res, "Mix created successfully!", 201,);
+});
+
+
+
+export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
+    const { mostawdaaId } = req.params;
+
+    const mixes = await mixModel.find({ Mostawdaa: mostawdaaId })
+        .populate({
+            path: "Product",
+            select: "-__v -createdAt -updatedAt" // كل التفاصيل ما عدا البيانات الغير ضرورية
+        })
+        .populate({
+            path: "Mostawdaa",
+            select: "name" // اسم المستودع فقط
+        })
+        .exec();
+
+    if (!mixes.length) {
+        return next(new Error("❌ لا توجد منتجات مرتبطة بهذا المستودع!", { cause: 404 }));
+    }
+
+    // ترتيب البيانات بشكل منسق
+    const formattedData = mixes.map((mix) => ({
+        _id: mix._id,
+        quantity: mix.quantity,
+        newprice: mix.newprice,
+        oldprice: mix.oldprice,
+        Mostawdaa: mix.Mostawdaa.name, // اسم المستودع
+        Product: mix.Product, // كل تفاصيل المنتج
+        createdAt: mix.createdAt,
+        updatedAt: mix.updatedAt,
+    }));
+
+    return successresponse(res, "✅ تم جلب المنتجات الخاصة بالمستودع!", 200, {
+        mostawdaaName: mixes[0].Mostawdaa.name,
+        products: formattedData
+    });
+});
+
+
+
+export const getMostawdaasWithProducts = asyncHandelr(async (req, res, next) => {
+    const result = await mixModel.aggregate([
+        {
+            $lookup: {
+                from: "products",
+                localField: "Product",
+                foreignField: "_id",
+                as: "productData"
+            }
+        },
+        {
+            $lookup: {
+                from: "mostawdaas",
+                localField: "Mostawdaa",
+                foreignField: "_id",
+                as: "mostawdaaData"
+            }
+        },
+        {
+            $unwind: "$mostawdaaData"
+        },
+        {
+            $group: {
+                _id: "$Mostawdaa",
+                mostawdaa: { $first: "$mostawdaaData" },
+                products: {
+                    $push: {
+                        product: { $first: "$productData" },
+                        newprice: "$newprice",
+                        oldprice: "$oldprice",
+                        quantity: "$quantity"
+                    }
+                }
+            }
+        }
+    ]);
+
+    return successresponse(res, "✅ تم جلب المستودعات مع المنتجات", 200, result);
+});
+
+
+
+export const getAllMostawdaas = asyncHandelr(async (req, res, next) => {
+    const mostawdaas = await MostawdaaModel.find().select("-__v");
+
+    return successresponse(res, "✅ تم جلب جميع المستودعات", 200, mostawdaas);
+})
 
 
 

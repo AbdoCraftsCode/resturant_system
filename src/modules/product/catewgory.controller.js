@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCategory, createdepatment, createSocialMedia, deleteCategory, deletedepartment, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, sendNotificationToUser, updateCategory, updatedepartment, updateNotification, updateSocialMedia } from "./service/category.service.js";
+import { createCategory, createdepatment, createMostawdaa, createSocialMedia, deleteCategory, deletedepartment, deleteMostawdaa, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, sendNotificationToUser, updateCategory, updatedepartment, updateMostawdaa, updateNotification, updateSocialMedia } from "./service/category.service.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { endpoint } from "./category.authrize.js";
@@ -11,6 +11,12 @@ router.post("/createCategory",
     authorization(endpoint.create),
     uploadCloudFile(fileValidationTypes.image).single("image"),
    createCategory
+)
+router.post("/createMostawdaa",
+    authentication(),
+    authorization(endpoint.create),
+    uploadCloudFile(fileValidationTypes.image).single("image"),
+    createMostawdaa
 )
 router.post("/sendNotificationToUser",
     authentication(),
@@ -31,6 +37,15 @@ router.patch("/updateCategory/:categoryId",
     uploadCloudFile(fileValidationTypes.image).single("image"),
     updateCategory
 )
+
+
+router.patch("/updateMostawdaa/:mostawdaaId",
+    authentication(),
+    authorization(endpoint.update),
+    uploadCloudFile(fileValidationTypes.image).single("image"),
+    updateMostawdaa
+)
+
 
 router.patch("/updatedepartment/:departmentId",
     authentication(),
@@ -56,6 +71,14 @@ router.delete("/deletedepartment/:departmentId",
     authorization(endpoint.delete),
    
     deletedepartment
+)
+
+
+router.delete("/deleteMostawdaa/:mostawdaaId",
+    authentication(),
+    authorization(endpoint.delete),
+
+    deleteMostawdaa
 )
 
 router.post("/getCategory", getCategories)

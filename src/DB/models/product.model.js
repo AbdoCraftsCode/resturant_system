@@ -49,8 +49,8 @@ const productSchema = new mongoose.Schema(
         },
 
       
-        newprice: { type: Number, },
-        oldprice: { type: Number,  },
+        // newprice: { type: Number, },
+        // oldprice: { type: Number,  },
         description: {
             en: { type: String, required: true },
             ar: { type: String, required: true }
@@ -63,11 +63,11 @@ const productSchema = new mongoose.Schema(
             secure_url: { type: String },
             public_id: { type: String },
         }],
-        category: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Category",
+        // category: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: "Category",
       
-        },
+        // },
         Department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",

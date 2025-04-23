@@ -9,7 +9,8 @@ import { DepartmentModel } from "../../../DB/models/Department3.model.js";
 import Usermodel from "../../../DB/models/User.model.js";
 import { SocialMediaModel } from "../../../DB/models/socialmidia.model.js";
 import { ProductModel } from "../../../DB/models/product.model.js";
-
+import admin from 'firebase-admin';
+import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
 export const createCategory = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user); 
     if (!["Admin", "Owner"].includes(req.user.role)) {
@@ -30,6 +31,126 @@ export const createCategory = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "Category created successfully!", 201, );
 });
+
+
+
+export const createMostawdaa = asyncHandelr(async (req, res, next) => {
+    console.log("User Data:", req.user);
+
+    // التحقق من الصلاحيات
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can create Mostawdaa.", { cause: 403 }));
+    }
+
+    // رفع الصورة على Cloudinary
+    const { secure_url, public_id } = await cloud.uploader.upload(req.file.path, {
+        folder: `mostawdaat/${req.user._id}`
+    });
+
+    // إنشاء المستودع في قاعدة البيانات
+    const mostawdaa = await MostawdaaModel.create({
+        name: {
+            en: req.body.name_en,
+            ar: req.body.name_ar
+        },
+        image: { secure_url, public_id },
+        location1: {
+            en: req.body.location1_en,
+            ar: req.body.location1_ar
+        },
+        location2: {
+            en: req.body.location2_en,
+            ar: req.body.location2_ar
+        },
+        owner: {
+            en: req.body.owner_en,
+            ar: req.body.owner_ar
+        },
+        workdate: {
+            en: req.body.workdate_en,
+            ar: req.body.workdate_ar
+        },
+        phone: req.body.phone,
+        watsapp: req.body.watsapp,
+        updatedBy: req.user._id
+    });
+
+    return successresponse(res, "Mostawdaa created successfully!", 201,);
+});
+
+export const updateMostawdaa = asyncHandelr(async (req, res, next) => {
+    // تحقق من صلاحية المستخدم (إذا كان Admin أو Owner)
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can update mostawdaas.", { cause: 403 }));
+    }
+
+    // البحث عن المستودع باستخدام المعرف (categoryId)
+    const mostawdaa = await MostawdaaModel.findById(req.params.mostawdaaId);
+    if (!mostawdaa) {
+        return next(new Error("Mostawdaa not found!", { cause: 404 }));
+    }
+
+    // إذا تم تحميل صورة جديدة
+    let newImage = mostawdaa.image;
+    if (req.file) {
+        const { secure_url, public_id } = await cloud.uploader.upload(req.file.path, { folder: `mostawdaas/${req.user._id}` });
+        newImage = { secure_url, public_id };
+
+        // إذا كانت هناك صورة قديمة، احذفها من Cloudinary
+        if (mostawdaa.image.public_id) {
+            await cloud.uploader.destroy(mostawdaa.image.public_id);
+        }
+    }
+
+    // تحديث بيانات المستودع
+    mostawdaa.name.en = req.body.name_en || mostawdaa.name.en;
+    mostawdaa.name.ar = req.body.name_ar || mostawdaa.name.ar;
+    mostawdaa.location1.en = req.body.location1_en || mostawdaa.location1.en;
+    mostawdaa.location1.ar = req.body.location1_ar || mostawdaa.location1.ar;
+    mostawdaa.location2.en = req.body.location2_en || mostawdaa.location2.en;
+    mostawdaa.location2.ar = req.body.location2_ar || mostawdaa.location2.ar;
+    mostawdaa.owner.en = req.body.owner_en || mostawdaa.owner.en;
+    mostawdaa.owner.ar = req.body.owner_ar || mostawdaa.owner.ar;
+    mostawdaa.workdate.en = req.body.workdate_en || mostawdaa.workdate.en;
+    mostawdaa.workdate.ar = req.body.workdate_ar || mostawdaa.workdate.ar;
+    mostawdaa.phone = req.body.phone || mostawdaa.phone;
+    mostawdaa.watsapp = req.body.watsapp || mostawdaa.watsapp;
+    mostawdaa.image = newImage;  // تحديث الصورة
+    mostawdaa.updatedBy = req.user._id;  // تحديث المستخدم الذي قام بالتعديل
+
+    // حفظ التغييرات
+    await mostawdaa.save();
+
+    return successresponse(res, "Mostawdaa updated successfully!", 200,);
+});
+
+
+export const deleteMostawdaa = asyncHandelr(async (req, res, next) => {
+    
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can delete mostawdaas.", { cause: 403 }));
+    }
+
+
+    const mostawdaa = await MostawdaaModel.findById(req.params.mostawdaaId);
+    if (!mostawdaa) {
+        return next(new Error("Mostawdaa not found!", { cause: 404 }));
+    }
+
+ 
+    if (mostawdaa.image.public_id) {
+        await cloud.uploader.destroy(mostawdaa.image.public_id);
+    }
+
+  
+    await MostawdaaModel.findByIdAndDelete(req.params.mostawdaaId);
+
+    return successresponse(res, "Mostawdaa deleted successfully!", 200);
+});
+
+
+
+
 
 
 
@@ -531,3 +652,74 @@ export const updateSocialMedia = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم تحديث بيانات التواصل الاجتماعي بنجاح!", 200);
 });
+
+
+
+
+
+
+const serviceAccount = {
+    type: "service_account",
+    project_id: "merba3-f8802",
+    private_key_id: "3e7a5bb045c3be0f157873eaf27ac985b14c2565",
+    private_key: `-----BEGIN PRIVATE KEY-----
+MIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCeNOD1B8bHVCy5
+sGPBgTnQCeGItj2/xY5RxvEzdpcKX3c9LpqwuVOwuPPt07jgjTypMX7ybC/VJVzw
+imChZLPYo3lodhaZDVHGAjKeRcukomMn4VrGucyIyKlz4XB5KMBXzY4XjEJfq557
+hI23LExgW+rK6WMLGvKtOOdiFUALKRSXofchOuCEGWW/n+aZ6+85m2TdY9wMFeEU
+efFIS13LvgI5yFg38jXTviECrc6Ni/P2aP5E9TfBU7JHmu59Da3P0JtGnwm2mhap
+Uvhoz5CoUVrKsZe0vimjZwm9ue8godh6y18MYjChwDZzpcjgM8roZnjiEAw2BAGR
+H+SqSUzFAgMBAAECgf8cDa42q3TfL5O+uyLNY2CzMXwtVGyoGPrVNRhJ29WkEHnQ
+gIP/8Nz6fGO9A/4MRIVIQ9eJckOetU4h80Do6kpODxt21B3O9ewmuQqea5LY+4uH
+WR+q40/Fi5OpvBCkwu4U4cu7I7gohSxddFrzwA2vWW/LeRlYo8O4N92MLOOyhpWQ
+BFeh3fxR1mK8ktZFF0f7yCaMmOPFZeOWF4YueBjTVfQwtxEskFHHR+uhNCdgTlBo
+r2o30leAHJjrojDhbueraDcf+jrU0Bu9icE4PWBEuVfpQ/apTse51uI/2vhGgFOL
++0Mg4ILASrS+ndSK0TdH4ajEiLiU+XTjcpvWWkECgYEAz78L+JxwN2IZH5T0uSe4
+E4UYK7wDdjzcKPdCo4JOjAlrsdvDbhq2iDGaetLQJUcU6sYeGhvfWe0gkT7zTrvv
+KEsJrPwBZztc9AsrFo00pSBMchSpLZnlC5s0MuIPYSC/yqmW30VeMprKKg4IQyu/
+vcEa+Mo8r2u08DMuvakPIAUCgYEAwvQdUgq9/Aqdz+ho5XfuVc0rEAHrsCzmDnpZ
+Y9ncalHlFurIhi6rs/SHOyCoiGXo/YdBWCq6z4HMvTYN9qhj/tnfU+BSMCElZGQI
+Xj2OavaWtPl4R3Xi1wIP2N2Wxs2wMMMABsDEoxrdyqSTc3bPGItuNkA/56GtCq6T
+D/mm1cECgYBDeLQFoaFci3LHbBRzUjAZvt9TzPN+4lNKxsuQ2VBzcNfWYx680tY3
+s4yNmYxanxRvD7tVFXpb9YTfR4e0KZuKBZz13r8B7SjKZhovb9sKSkwpvQYZNmNK
+erTgVcVS8VT5GE1U5G2sl9NTB02tqzbSBTaiWOSOwLd6T9U9afvslQKBgGm8bv6l
+Vt+RfoBaBDKY9opQyc9Xy1X1NB2cHEl8ywBbRI5GbtXgED59HK9kCiRYaaLALh+8
+pS+QrdPdsnsaX4nE70yVuN3jzF0DqEo8xraa4ahsOeFAPfTxaFjt7i4LN0lrKeN/
+v+ba1npnApY4VSBx1yfTdxWRacIGZzrd46/BAoGATZke5s3oS8OX3hvr5zULP84J
+iHTqGpWHYQzkRFxN7b934nTO6GsF+Rx4xf5tlZldnjo2HB5KpkIEoT/6AcpiSTYQ
+PMXdIUigLU5Miv9iwRSOQSUibSPnlSyCS5wKXQV/wVPoU+B1yrEr71Ii3BxEFQ3b
+Ucztf8+48J9J+qMzTbQ=
+-----END PRIVATE KEY-----`,
+    client_email: "firebase-adminsdk-fbsvc@merba3-f8802.iam.gserviceaccount.com",
+    client_id: "116339282509322684729",
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40merba3-f8802.iam.gserviceaccount.com",
+    universe_domain: "googleapis.com",
+};
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+})
+// دالة إرسال إشعار
+async function sendNotification(deviceToken, title, body) {
+    const message = {
+        notification: { title, body },
+        token: deviceToken,
+    };
+
+    try {
+        const response = await admin.messaging().send(message);
+        console.log('✅ تم إرسال الإشعار:', response);
+    } catch (error) {
+        console.error('❌ فشل إرسال الإشعار:', error);
+    }
+}
+
+// مثال استخدام
+// sendNotification(
+//     'ek-wq43JQJGwbhbBdVLhjJ:APA91bH-Zy8zaGG_G1t1MnI9av220zGYpVauqmy7d3WKcE4Ck-0ioy7d2pwG2soR7VOPmdy6pAm86rsWRUkTD5p63wZ_LWTO90B08NjbxG2DrGuFpMrXHzU',
+//     '💡 إشعار تجريبي',
+//     'هذا مجرد اختبار من الباك اند'
+// );

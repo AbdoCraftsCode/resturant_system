@@ -10,7 +10,6 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js"
-    
   },
   "keywords": [],
   "author": "",
@@ -24,6 +23,7 @@
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
+    "firebase-admin": "^13.3.0",
     "g": "^2.0.1",
     "google-auth-library": "^9.15.1",
     "joi": "^17.13.3",
