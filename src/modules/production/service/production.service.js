@@ -1150,8 +1150,11 @@ export const getMostawdaasWithProducts = asyncHandelr(async (req, res, next) => 
 export const getAllMostawdaas = asyncHandelr(async (req, res, next) => {
     const mostawdaas = await MostawdaaModel.find().select("-__v");
 
-    return successresponse(res, "✅ تم جلب جميع المستودعات", 200, mostawdaas);
-})
+    return res.status(200).json({
+        message: "✅ تم جلب جميع المستودعات",
+        data: mostawdaas
+    });
+});
 
 
 
