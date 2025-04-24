@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { endpoint } from "./production.authrize.js";
-import { cancelOrder  ,createAdminByOwner, updateMixPriceAndQuantity,createBranch, createImages, createMix, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllMostawdaas, getAllOrders, getMostawdaasWithProducts, getorder, getProducts, getProductsByMostawdaa, getProductswithout, reorderProduct, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct } from "./service/production.service.js";
+import { cancelOrder  ,createAdminByOwner, updateMixPriceAndQuantity,createBranch, createImages, createMix, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllMostawdaas, getAllOrders, getMostawdaasWithProducts, getorder, getProducts, getProductsByMostawdaa, getProductswithout, reorderProduct, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct, reorderProductInWarehouse } from "./service/production.service.js";
 
 const router = Router()
 
@@ -10,9 +10,13 @@ const router = Router()
 router.post("/createProduct",
     authentication(),
     authorization(endpoint.create),
-    uploadCloudFile(fileValidationTypes.image).array("image", 3),
-   createProduct
-)
+    uploadCloudFile(fileValidationTypes.image).fields([
+        { name: "image", maxCount: 5 },
+        { name: "logo", maxCount: 1 }
+    ]),
+    createProduct
+);
+
 router.post("/createImages/admin",
     authentication(),
     authorization(endpoint.create),
@@ -23,6 +27,7 @@ router.post("/createImages/admin",
 router.post("/getProducts", getProducts)
 router.patch("/updateMixPriceAndQuantity/:id", updateMixPriceAndQuantity)
 router.post("/reorderProduct", reorderProduct)
+router.post("/reorderProductInWarehouse", reorderProductInWarehouse)
 router.post("/createMix",authentication() ,createMix)
 router.patch("/updateOrder/:orderId", authentication(),updateOrder)
 router.get("/getAllImages", getAllImages)
@@ -53,9 +58,13 @@ router.patch("/updateAdminByOwner/:adminId/admin", authentication(), updateAdmin
 router.patch("/updateProduct/:productId",
     authentication(),
     authorization(endpoint.update),
-    uploadCloudFile(fileValidationTypes.image).array("image", 3),
+    uploadCloudFile(fileValidationTypes.image).fields([
+        { name: "image", maxCount: 5 },
+        { name: "logo", maxCount: 1 }
+    ]),
     updateProduct
-)
+);
+
 router.delete("/cancelOrder/:orderId", authentication(), cancelOrder)
 router.delete("/deleteImage/admin", authentication(), deleteImage)
 

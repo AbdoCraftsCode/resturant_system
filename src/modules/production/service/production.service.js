@@ -29,23 +29,38 @@ import bcrypt from "bcrypt"
 
 export const createProduct = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
-    console.log("User Data:", req.body);
-    // التأكد من أن المستخدم لديه الصلاحية لإضافة منتج
+    console.log("Request Body:", req.body);
+
+    // التأكد من أن المستخدم لديه الصلاحية
     if (!["Admin", "Owner"].includes(req.user.role)) {
         return next(new Error("Unauthorized! Only Admins or Owners can create products.", { cause: 403 }));
     }
 
- 
-    if (!req.files || req.files.length === 0) {
-        return next(new Error("❌ يجب رفع صورة واحدة على الأقل!", { cause: 400 }));
+    // تأكد من وجود صور
+    const productImages = req.files?.image || [];
+    const logoImages = req.files?.logo || [];
+
+    if (!productImages.length) {
+        return next(new Error("❌ يجب رفع صورة واحدة على الأقل للمنتج!", { cause: 400 }));
     }
 
-    const images = await Promise.all(req.files.map(async (file) => {
-        const uploadedImage = await cloud.uploader.upload(file.path, { folder: `products/${req.user._id}` });
-        return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
+    // رفع صور المنتج
+    const uploadedProductImages = await Promise.all(productImages.map(async (file) => {
+        const uploaded = await cloud.uploader.upload(file.path, {
+            folder: `products/${req.user._id}`
+        });
+        return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
     }));
 
-   
+    // رفع اللوجو (اختياري)
+    const uploadedLogos = await Promise.all(logoImages.map(async (file) => {
+        const uploaded = await cloud.uploader.upload(file.path, {
+            folder: `products/${req.user._id}/logo`
+        });
+        return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
+    }));
+
+    // تحويل tableData لو موجود
     let tableData = [];
     if (req.body.tableData) {
         try {
@@ -53,8 +68,9 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
         } catch (error) {
             return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
         }
-    } 
+    }
 
+    // إنشاء المنتج
     const product = await ProductModel.create({
         name1: {
             en: req.body.name1_en,
@@ -64,13 +80,10 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             en: req.body.stoargecondition_en,
             ar: req.body.stoargecondition_ar
         },
-    
         name2: {
             en: req.body.name2_en,
             ar: req.body.name2_ar
         },
-        // newprice: req.body.newprice,
-        // oldprice: req.body.oldprice,
         description: {
             en: req.body.description_en,
             ar: req.body.description_ar
@@ -83,10 +96,10 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
             en: req.body.quantity_en,
             ar: req.body.quantity_ar
         },
-        // category: req.body.categoryId,
         Department: req.body.departmentId,
         createdBy: req.user._id,
-        image: images,
+        image: uploadedProductImages,
+        logo: uploadedLogos,
         tableData: tableData.map(item => ({
             name: {
                 en: item.name_en,
@@ -97,13 +110,10 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
                 ar: item.value_ar
             }
         })),
-     
         animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes).map(item => ({
             ar: item.ar,
             en: item.en
         })) : []
-
-
     });
 
     return successresponse(res, "✅ المنتج تم إنشاؤه بنجاح!", 201);
@@ -234,7 +244,8 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
             "image",
             "tableData",
             "stoargecondition",
-            "animalTypes"
+            "animalTypes",
+            "logo"
         ])
         .sort({ order: 1 })
         .populate(populateDepartment || "") // لن يتم تنفيذ populate إذا لم يوجد departmentId
@@ -403,23 +414,35 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
         return next(new Error("❌ غير مصرح لك بتعديل المنتجات!", { cause: 403 }));
     }
 
+    // تحديث الصور
     let images = [...product.image];
-    if (req.files && req.files.length > 0) {
+    if (req.files?.image && req.files.image.length > 0) {
         await Promise.all(product.image.map(img => cloud.uploader.destroy(img.public_id)));
-        images = await Promise.all(req.files.map(async (file) => {
-            const uploadedImage = await cloud.uploader.upload(file.path, { folder: `products/${req.user._id}` });
+        images = await Promise.all(req.files.image.map(async (file) => {
+            const uploadedImage = await cloud.uploader.upload(file.path, {
+                folder: `products/${req.user._id}`
+            });
             return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
         }));
     }
 
-    // معالجة tableData مع تسجيل للتحقق
-    let tableData = product.tableData; // القيمة الافتراضية هي القديمة
+    // تحديث اللوجو
+    let logo = [...(product.logo || [])];
+    if (req.files?.logo && req.files.logo.length > 0) {
+        await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
+        logo = await Promise.all(req.files.logo.map(async (file) => {
+            const uploadedLogo = await cloud.uploader.upload(file.path, {
+                folder: `products/${req.user._id}/logo`
+            });
+            return { secure_url: uploadedLogo.secure_url, public_id: uploadedLogo.public_id };
+        }));
+    }
+
+    // معالجة tableData
+    let tableData = product.tableData;
     if (req.body.tableData) {
         try {
-            console.log("Raw tableData from req.body:", req.body.tableData);
             const parsedTableData = JSON.parse(req.body.tableData);
-            console.log("Parsed tableData:", parsedTableData);
-            // تحويل البيانات إلى الهيكل المتوقع في السكيما
             tableData = parsedTableData.map(item => ({
                 name: {
                     en: item.name_en,
@@ -430,7 +453,6 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
                     ar: item.value_ar
                 }
             }));
-            console.log("Formatted tableData for MongoDB:", tableData);
         } catch (error) {
             return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
         }
@@ -459,6 +481,7 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
             },
             category: req.body.categoryId || product.category,
             image: images,
+            logo: logo,
             tableData: tableData,
             stoargecondition: {
                 en: req.body.stoargecondition_en || product.stoargecondition.en,
@@ -1071,6 +1094,7 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
     const { mostawdaaId } = req.params;
 
     const mixes = await mixModel.find({ Mostawdaa: mostawdaaId })
+        .sort({ order: 1 }) // ✅ ترتيب حسب order
         .populate({
             path: "Product",
             select: "-__v -createdAt -updatedAt" // كل التفاصيل ما عدا البيانات الغير ضرورية
@@ -1078,21 +1102,21 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
         .populate({
             path: "Mostawdaa",
             select: "name" // اسم المستودع فقط
-        })
-        .exec();
+        });
 
     if (!mixes.length) {
         return next(new Error("❌ لا توجد منتجات مرتبطة بهذا المستودع!", { cause: 404 }));
     }
 
-    // ترتيب البيانات بشكل منسق
-    const formattedData = mixes.map((mix) => ({
+    const formattedData = mixes.map((mix, index) => ({
+        index: index + 1, // ✅ ترقيم المنتج من 1 وانت طالع
         _id: mix._id,
         quantity: mix.quantity,
         newprice: mix.newprice,
         oldprice: mix.oldprice,
-        Mostawdaa: mix.Mostawdaa.name, // اسم المستودع
-        Product: mix.Product, // كل تفاصيل المنتج
+        order: mix.order, // ✅ ممكن ترجعه لو حابب الترتيب الفعلي من الداتا
+        Mostawdaa: mix.Mostawdaa.name,
+        Product: mix.Product,
         createdAt: mix.createdAt,
         updatedAt: mix.updatedAt,
     }));
@@ -1184,6 +1208,34 @@ export const updateMixPriceAndQuantity = asyncHandelr(async (req, res) => {
     });
 });
 
+
+
+export const reorderProductInWarehouse = asyncHandelr(async (req, res, next) => {
+    const { productId, mostawdaaId, newIndex } = req.body;
+
+    if (!productId || !mostawdaaId || typeof newIndex !== "number") {
+        return next(new Error("❌ يجب إرسال معرف المنتج والمستودع و الـ index الجديد!", { cause: 400 }));
+    }
+
+    // هات كل المنتجات المرتبطة بنفس المستودع
+    const mixes = await mixModel.find({ Mostawdaa: mostawdaaId }).sort({ order: 1 });
+
+    const movingIndex = mixes.findIndex(m => m.Product.toString() === productId);
+    if (movingIndex === -1) {
+        return next(new Error("❌ المنتج غير موجود داخل هذا المستودع!", { cause: 404 }));
+    }
+
+    const [movingMix] = mixes.splice(movingIndex, 1);
+    mixes.splice(newIndex, 0, movingMix); // دخله في المكان الجديد
+
+    // حدّث ترتيب كل المنتجات
+    for (let i = 0; i < mixes.length; i++) {
+        mixes[i].order = i;
+        await mixes[i].save();
+    }
+
+    return successresponse(res, "✅ تم تحديث ترتيب المنتج داخل المستودع!", 200);
+});
 
 
 

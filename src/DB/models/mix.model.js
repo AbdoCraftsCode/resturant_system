@@ -5,6 +5,7 @@ const mixSchema = new mongoose.Schema({
     Product: { type: mongoose.Types.ObjectId, ref: "Product", default: null },
     newprice: { type: Number, },
     oldprice: { type: Number, },
+    order: { type: Number, default: 0 } ,
     quantity: {
         en: { type: String, required: true, trim: true },
         ar: { type: String, required: true, trim: true }

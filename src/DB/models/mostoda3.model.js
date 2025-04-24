@@ -8,6 +8,7 @@ const MostawdaaSchema = new mongoose.Schema(
             en: { type: String, required: true, trim: true },
             ar: { type: String, required: true, trim: true }
         },
+          order: { type: Number, default: 0 } ,
         image: {
             secure_url: { type: String, required: true }, // الصورة مطلوبة
             public_id: { type: String, required: true }   // مهم لحذف الصور من Cloudinary
@@ -29,10 +30,10 @@ const MostawdaaSchema = new mongoose.Schema(
             ar: { type: String, required: true, trim: true }
         },
         phone: {
-            type: Number,
+            type: String,
         },
         watsapp: {
-            type: Number,
+            type: String,
         },
         
         updatedBy: {

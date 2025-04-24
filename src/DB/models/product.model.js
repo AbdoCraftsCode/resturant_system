@@ -63,6 +63,10 @@ const productSchema = new mongoose.Schema(
             secure_url: { type: String },
             public_id: { type: String },
         }],
+        logo: [{
+            secure_url: { type: String },
+            public_id: { type: String },
+        }],
         // category: {
         //     type: mongoose.Schema.Types.ObjectId,
         //     ref: "Category",
