@@ -11,6 +11,7 @@ import { SocialMediaModel } from "../../../DB/models/socialmidia.model.js";
 import { ProductModel } from "../../../DB/models/product.model.js";
 import admin from 'firebase-admin';
 import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
+import { mixModel } from "../../../DB/models/mix.model.js";
 export const createCategory = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user); 
     if (!["Admin", "Owner"].includes(req.user.role)) {
@@ -150,8 +151,71 @@ export const deleteMostawdaa = asyncHandelr(async (req, res, next) => {
 
 
 
+;
+
+export const getAllProductsWithWarehouses = async (req, res) => {
+    try {
+        const result = await mixModel.aggregate([
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "Product",
+                    foreignField: "_id",
+                    as: "productInfo"
+                }
+            },
+            {
+                $unwind: "$productInfo"
+            },
+            {
+                $lookup: {
+                    from: "mostawdaas",
+                    localField: "Mostawdaa",
+                    foreignField: "_id",
+                    as: "warehouseInfo"
+                }
+            },
+            {
+                $unwind: "$warehouseInfo"
+            },
+            {
+                $group: {
+                    _id: "$Product",
+                    productData: { $first: "$productInfo" },
+                    warehouses: { $push: "$warehouseInfo.name" } // assuming name is { en, ar }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productData: 1,
+                    warehouses: 1
+                }
+            }
+        ]);
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ success: false, message: "Something went wrong" });
+    }
+};
 
 
+
+
+export const deleteMix = asyncHandelr(async (req, res, next) => {
+    const { mixId } = req.params;
+
+    const deletedMix = await mixModel.findByIdAndDelete(mixId);
+    if (!deletedMix) {
+        return res.status(404).json({ message: "❌ العنصر غير موجود" });
+    }
+
+    return res.status(200).json({
+        message: "🗑️ تم حذف العنصر من جدول Mix بنجاح"
+    });
+});
 
 
 // export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {

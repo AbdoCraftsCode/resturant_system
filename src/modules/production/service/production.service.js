@@ -1157,7 +1157,32 @@ export const getAllMostawdaas = asyncHandelr(async (req, res, next) => {
 });
 
 
+export const updateMixPriceAndQuantity = asyncHandelr(async (req, res) => {
+    const { id } = req.params;
+    const { newprice, quantity, oldprice } = req.body;
 
+    const updatedMix = await mixModel.findByIdAndUpdate(
+        id,
+        {
+            oldprice,
+            newprice,
+            quantity: {
+                en: quantity?.en,
+                ar: quantity?.ar,
+            }
+        },
+        { new: true }
+    );
+
+    if (!updatedMix) {
+        return res.status(404).json({ message: "❌ هذا العنصر غير موجود" });
+    }
+
+    return res.status(200).json({
+        message: "✅ تم تعديل السعر والكمية بنجاح",
+        // data: updatedMix,
+    });
+});
 
 
 
