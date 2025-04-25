@@ -1093,15 +1093,24 @@ export const createMix = asyncHandelr(async (req, res, next) => {
 export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
     const { mostawdaaId } = req.params;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // حساب العدد الكلي قبل الباجيناشن
+    const totalCount = await mixModel.countDocuments({ Mostawdaa: mostawdaaId });
+
     const mixes = await mixModel.find({ Mostawdaa: mostawdaaId })
         .sort({ order: 1 }) // ✅ ترتيب حسب order
+        .skip(skip)
+        .limit(limit)
         .populate({
             path: "Product",
-            select: "-__v -createdAt -updatedAt" // كل التفاصيل ما عدا البيانات الغير ضرورية
+            select: "-__v -createdAt -updatedAt"
         })
         .populate({
             path: "Mostawdaa",
-            select: "name" // اسم المستودع فقط
+            select: "name"
         });
 
     if (!mixes.length) {
@@ -1109,21 +1118,86 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
     }
 
     const formattedData = mixes.map((mix, index) => ({
-        index: index + 1, // ✅ ترقيم المنتج من 1 وانت طالع
+        index: skip + index + 1, // ✅ ترقيم يبدأ من رقم العنصر الحقيقي في الصفحات
         _id: mix._id,
         quantity: mix.quantity,
         newprice: mix.newprice,
         oldprice: mix.oldprice,
-        order: mix.order, // ✅ ممكن ترجعه لو حابب الترتيب الفعلي من الداتا
+        order: mix.order,
         Mostawdaa: mix.Mostawdaa.name,
         Product: mix.Product,
         createdAt: mix.createdAt,
         updatedAt: mix.updatedAt,
     }));
 
+    const totalPages = Math.ceil(totalCount / limit);
+
     return successresponse(res, "✅ تم جلب المنتجات الخاصة بالمستودع!", 200, {
         mostawdaaName: mixes[0].Mostawdaa.name,
+        currentPage: page,
+        totalPages,
+        totalProducts: totalCount,
         products: formattedData
+    });
+});
+
+
+export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, next) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const { departmentId } = req.query;
+
+    const mixes = await mixModel.find({})
+        .sort({ order: 1 })
+        .populate({
+            path: "Product",
+            match: departmentId ? { Department: departmentId } : {}, // ✅ فلترة المنتج حسب القسم
+            select: "-__v -createdAt -updatedAt"
+        })
+        .populate({
+            path: "Mostawdaa",
+            select: "name _id"
+        });
+
+    // ⚠️ بعد الـ populate، بعض المنتجات ممكن تكون null لو مش من نفس القسم
+    const filteredMixes = mixes.filter(mix => mix.Product !== null);
+
+    if (!filteredMixes.length) {
+        return next(new Error("❌ لا توجد أي بيانات!", { cause: 404 }));
+    }
+
+    const productMap = new Map();
+
+    filteredMixes.forEach((mix) => {
+        const productId = mix.Product._id.toString();
+
+        if (!productMap.has(productId)) {
+            productMap.set(productId, {
+                Product: mix.Product,
+                Mostawdaat: new Set()
+            });
+        }
+
+        productMap.get(productId).Mostawdaat.add(JSON.stringify({
+            _id: mix.Mostawdaa._id,
+            name: mix.Mostawdaa.name
+        }));
+    });
+
+    const allProducts = Array.from(productMap.values()).map(item => ({
+        Product: item.Product,
+        Mostawdaat: Array.from(item.Mostawdaat).map(str => JSON.parse(str))
+    }));
+
+    const paginatedProducts = allProducts.slice(skip, skip + limit);
+    const totalPages = Math.ceil(allProducts.length / limit);
+
+    return successresponse(res, "✅ تم جلب المنتجات مع أسماء المستودعات!", 200, {
+        currentPage: page,
+        totalPages,
+        totalProducts: allProducts.length,
+        products: paginatedProducts
     });
 });
 
