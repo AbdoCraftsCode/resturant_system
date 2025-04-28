@@ -933,6 +933,10 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
 
 
 
+
+
+
+
 // export const getAllOrders = asyncHandelr(async (req, res, next) => {
 //     const orders = await OrderModel.find()
 //         .populate("user", "lastName firstName email mobileNumber")
@@ -988,7 +992,7 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
         .skip(skip)
         .limit(limit)
         .populate("user", "lastName firstName email mobileNumber")
-        .populate("products.productId", "name1 newprice");
+        .populate("products", "name1 newprice");
 
     // ترقيم الطلبات حسب الترتيب في الصفحة الحالية
     const numberedOrders = orders.map((order, index) => ({
@@ -1060,7 +1064,7 @@ export const updateOrder = asyncHandelr(async (req, res, next) => {
         { new: true }
     )
         .populate("user", "lastName firstName email mobileNumber")
-        .populate("products.productId", "name1 newprice");
+        .populate("products", "name1 newprice");
 
     return successresponse(res, "✅ تم تحديث الطلب بنجاح!", 200, );
 });

@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema(
@@ -10,8 +9,12 @@ const orderSchema = new mongoose.Schema(
         },
         products: [
             {
-                productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-                quantity: { type: Number, required: true, default: 1 }
+                type: { type: String,  }, // نوع المنتج
+                name: { type: String, }, // اسم المنتج
+                warehouseName: { type: String, }, // اسم المستودع
+                quantity: { type: String,  }, // الكمية
+                price: { type: String,  }, // السعر
+                country: { type: String,  } // الدولة
             }
         ],
         address: { type: String, required: true },
@@ -20,7 +23,6 @@ const orderSchema = new mongoose.Schema(
         paidAmount: { type: Number, default: 0 },
         status: { type: String, default: "waiting" },
     },
-  
     { timestamps: true }
 );
 
