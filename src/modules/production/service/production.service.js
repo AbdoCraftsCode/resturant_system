@@ -2,6 +2,7 @@ import * as dbservice from "../../../DB/dbservice.js"
 import { AdvirtModel } from "../../../DB/models/advertise.model.js";
 import { BranchModel } from "../../../DB/models/branch.model.js";
 import { CategoryModel } from "../../../DB/models/Category.model.js";
+import { HatapModel } from "../../../DB/models/hatap.model.js";
 import { mixModel } from "../../../DB/models/mix.model.js";
 import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
 
@@ -118,6 +119,102 @@ export const createProduct = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ المنتج تم إنشاؤه بنجاح!", 201);
 });
+
+export const createHatap = asyncHandelr(async (req, res, next) => {
+    console.log("User Data:", req.user);
+    console.log("Request Body:", req.body);
+
+    // التأكد من أن المستخدم لديه الصلاحية
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("Unauthorized! Only Admins or Owners can create products.", { cause: 403 }));
+    }
+
+    // تأكد من وجود صور
+    const productImages = req.files?.image || [];
+    const logoImages = req.files?.logo || [];
+
+    if (!productImages.length) {
+        return next(new Error("❌ يجب رفع صورة واحدة على الأقل للمنتج!", { cause: 400 }));
+    }
+
+    // رفع صور المنتج
+    const uploadedProductImages = await Promise.all(productImages.map(async (file) => {
+        const uploaded = await cloud.uploader.upload(file.path, {
+            folder: `products/${req.user._id}`
+        });
+        return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
+    }));
+
+    // رفع اللوجو (اختياري)
+    const uploadedLogos = await Promise.all(logoImages.map(async (file) => {
+        const uploaded = await cloud.uploader.upload(file.path, {
+            folder: `products/${req.user._id}/logo`
+        });
+        return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
+    }));
+
+    // تحويل tableData لو موجود
+    let tableData = [];
+    if (req.body.tableData) {
+        try {
+            tableData = JSON.parse(req.body.tableData);
+        } catch (error) {
+            return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
+        }
+    }
+
+    // إنشاء المنتج
+    const product = await HatapModel.create({
+        name1: {
+            en: req.body.name1_en,
+            ar: req.body.name1_ar
+        },
+        stoargecondition: {
+            en: req.body.stoargecondition_en,
+            ar: req.body.stoargecondition_ar
+        },
+        name2: {
+            en: req.body.name2_en,
+            ar: req.body.name2_ar
+        },
+        description: {
+            en: req.body.description_en,
+            ar: req.body.description_ar
+        },
+        country: {
+            en: req.body.country_en,
+            ar: req.body.country_ar
+        },
+        quantity: {
+            en: req.body.quantity_en,
+            ar: req.body.quantity_ar
+        },
+        newprice: req.body.newprice,
+        oldprice: req.body.oldprice,
+        createdBy: req.user._id,
+        image: uploadedProductImages,
+        logo: uploadedLogos,
+        tableData: tableData.map(item => ({
+            name: {
+                en: item.name_en,
+                ar: item.name_ar
+            },
+            value: {
+                en: item.value_en,
+                ar: item.value_ar
+            }
+        })),
+      
+    });
+
+    return successresponse(res, "✅ المنتج تم إنشاؤه بنجاح!", 201);
+});
+
+
+
+
+
+
 
 
 // [{ "name_en": "Weight", "name_ar": "الوزن", "value_en": "500", "value_ar": "500 " }
@@ -271,6 +368,69 @@ export const getProducts = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
 });
 
+
+
+export const gethatap = asyncHandelr(async (req, res, next) => {
+    const { departmentId, page = 1, limit = 10 } = req.query; // إضافة page و limit مع قيم افتراضية
+
+    let filter = {};
+    let populateDepartment = null;
+
+    if (departmentId) {
+        filter.Department = departmentId;
+        populateDepartment = { path: "Department", select: "name" };
+    }
+
+    const skip = (page - 1) * limit; // حساب كم منتج نتخطاه
+
+    const products = await HatapModel.find(filter)
+        .select([
+            "name1",
+            "name2",
+            "description",
+            "quantity",
+            "newprice",
+            "oldprice",
+            "country",
+            "image",
+            "tableData",
+            "stoargecondition",
+            "animalTypes",
+            "logo"
+        ])
+        .sort({ order: 1 })
+        .populate(populateDepartment || "")
+        .skip(skip)  // تطبيق skip
+        .limit(parseInt(limit)) // تطبيق limit مع التحويل إلى رقم
+        .exec();
+
+    if (departmentId && products.length === 0) {
+        return next(new Error("❌ لا توجد منتجات متاحة لهذا القسم!", { cause: 404 }));
+    }
+
+    const numberedProducts = products.map((product, index) => ({
+        number: skip + index + 1, // تعديل الترقيم حسب الصفحة
+        ...product.toObject()
+    }));
+
+    const responseData = {
+        products: numberedProducts,
+        pagination: {
+            currentPage: parseInt(page),
+            limit: parseInt(limit),
+        }
+    };
+
+    if (departmentId && products.length > 0) {
+        responseData.department = products[0].Department;
+    }
+
+    return successresponse(res, "✅ المنتجات تم جلبها بنجاح!", 200, responseData);
+});
+
+
+
+
 export const reorderProduct = asyncHandelr(async (req, res, next) => {
     const { productId, newIndex } = req.body;
 
@@ -300,6 +460,52 @@ export const reorderProduct = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم تحديث ترتيب المنتج بنجاح!", 200);
 });
+
+
+
+
+
+export const reorderHatap = asyncHandelr(async (req, res, next) => {
+    const { productId, newIndex } = req.body;
+
+    if (!productId || typeof newIndex !== "number") {
+        return next(new Error("❌ يجب إرسال معرف المنتج و الـ index الجديد!", { cause: 400 }));
+    }
+
+    // 1. هات كل المنتجات مرتبة
+    const products = await HatapModel.find().sort({ order: 1 });
+
+    // 2. لاقي المنتج اللي محتاج تحركه
+    const movingProductIndex = products.findIndex(p => p._id.toString() === productId);
+    if (movingProductIndex === -1) {
+        return next(new Error("❌ المنتج غير موجود!", { cause: 404 }));
+    }
+
+    const [movingProduct] = products.splice(movingProductIndex, 1); // شيل المنتج
+
+    // 3. دخله في المكان الجديد
+    products.splice(newIndex, 0, movingProduct);
+
+    // 4. عدل ترتيب كل المنتجات
+    for (let i = 0; i < products.length; i++) {
+        products[i].order = i;
+        await products[i].save();
+    }
+
+    return successresponse(res, "✅ تم تحديث ترتيب المنتج بنجاح!", 200);
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
