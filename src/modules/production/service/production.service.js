@@ -388,6 +388,9 @@ export const gethatap = asyncHandelr(async (req, res, next) => {
 
     const skip = (page - 1) * limit; // حساب كم منتج نتخطاه
 
+    // حساب التوتال
+    const totalProducts = await HatapModel.countDocuments(filter);
+
     const products = await HatapModel.find(filter)
         .select([
             "name1",
@@ -405,8 +408,8 @@ export const gethatap = asyncHandelr(async (req, res, next) => {
         ])
         .sort({ order: 1 })
         .populate(populateDepartment || "")
-        .skip(skip)  // تطبيق skip
-        .limit(parseInt(limit)) // تطبيق limit مع التحويل إلى رقم
+        .skip(skip)
+        .limit(parseInt(limit))
         .exec();
 
     if (departmentId && products.length === 0) {
@@ -414,7 +417,7 @@ export const gethatap = asyncHandelr(async (req, res, next) => {
     }
 
     const numberedProducts = products.map((product, index) => ({
-        number: skip + index + 1, // تعديل الترقيم حسب الصفحة
+        number: skip + index + 1,
         ...product.toObject()
     }));
 
@@ -423,6 +426,8 @@ export const gethatap = asyncHandelr(async (req, res, next) => {
         pagination: {
             currentPage: parseInt(page),
             limit: parseInt(limit),
+            totalProducts,
+            totalPages: Math.ceil(totalProducts / limit)
         }
     };
 
