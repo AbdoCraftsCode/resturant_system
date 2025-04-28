@@ -189,6 +189,11 @@ export const createHatap = asyncHandelr(async (req, res, next) => {
             en: req.body.quantity_en,
             ar: req.body.quantity_ar
         },
+
+        stoargecondition: {
+            en: req.body.stoargecondition_en,
+            ar: req.body.stoargecondition_ar
+        },
         newprice: req.body.newprice,
         oldprice: req.body.oldprice,
         createdBy: req.user._id,
@@ -603,6 +608,44 @@ export const deleteProduct = asyncHandelr(async (req, res, next) => {
 
 
 
+export const deleteHatap = asyncHandelr(async (req, res, next) => {
+    const { productId } = req.params;
+
+
+    if (!productId) {
+        return next(new Error("❌ يجب إدخال معرف المنتج!", { cause: 400 }));
+    }
+
+
+    const product = await HatapModel.findById(productId);
+    if (!product) {
+        return next(new Error("❌ المنتج غير موجود!", { cause: 404 }));
+    }
+
+
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("❌ غير مصرح لك بحذف المنتجات!", { cause: 403 }));
+    }
+
+
+    if (product.image && product.image.length > 0) {
+        await Promise.all(
+            product.image.map(async (img) => {
+                if (img.public_id) {
+                    await cloud.uploader.destroy(img.public_id);
+                }
+            })
+        );
+    }
+
+
+    await HatapModel.findByIdAndDelete(productId);
+
+    return successresponse(res, "✅ تم حذف المنتج وجميع صوره بنجاح!", 200);
+});
+
+
+
 
 export const updateProduct = asyncHandelr(async (req, res, next) => {
     const { productId } = req.params;
@@ -700,6 +743,119 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200);
 });
+
+
+
+
+
+export const updateHatap = asyncHandelr(async (req, res, next) => {
+    const { productId } = req.params;
+
+    if (!productId) {
+        return next(new Error("❌ يجب إدخال معرف المنتج!", { cause: 400 }));
+    }
+
+    const product = await HatapModel.findById(productId);
+    if (!product) {
+        return next(new Error("❌ المنتج غير موجود!", { cause: 404 }));
+    }
+
+    if (!["Admin", "Owner"].includes(req.user.role)) {
+        return next(new Error("❌ غير مصرح لك بتعديل المنتجات!", { cause: 403 }));
+    }
+
+    // تحديث الصور
+    let images = [...product.image];
+    if (req.files?.image && req.files.image.length > 0) {
+        await Promise.all(product.image.map(img => cloud.uploader.destroy(img.public_id)));
+        images = await Promise.all(req.files.image.map(async (file) => {
+            const uploadedImage = await cloud.uploader.upload(file.path, {
+                folder: `products/${req.user._id}`
+            });
+            return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
+        }));
+    }
+
+    // تحديث اللوجو
+    let logo = [...(product.logo || [])];
+    if (req.files?.logo && req.files.logo.length > 0) {
+        await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
+        logo = await Promise.all(req.files.logo.map(async (file) => {
+            const uploadedLogo = await cloud.uploader.upload(file.path, {
+                folder: `products/${req.user._id}/logo`
+            });
+            return { secure_url: uploadedLogo.secure_url, public_id: uploadedLogo.public_id };
+        }));
+    }
+
+    // معالجة tableData
+    let tableData = product.tableData;
+    if (req.body.tableData) {
+        try {
+            const parsedTableData = JSON.parse(req.body.tableData);
+            tableData = parsedTableData.map(item => ({
+                name: {
+                    en: item.name_en,
+                    ar: item.name_ar
+                },
+                value: {
+                    en: item.value_en,
+                    ar: item.value_ar
+                }
+            }));
+        } catch (error) {
+            return next(new Error("❌ تنسيق tableData غير صحيح! يجب أن يكون JSON صالح.", { cause: 400 }));
+        }
+    }
+
+    const updatedProduct = await HatapModel.findByIdAndUpdate(
+        productId,
+        {
+            name1: {
+                en: req.body.name1_en || product.name1?.en,
+                ar: req.body.name1_ar || product.name1?.ar
+            },
+            name2: {
+                en: req.body.name2_en || product.name2?.en,
+                ar: req.body.name2_ar || product.name2?.ar
+            },
+            newprice: req.body.newprice || product.newprice,
+            oldprice: req.body.oldprice || product.oldprice,
+            description: {
+                en: req.body.description_en || product.description?.en,
+                ar: req.body.description_ar || product.description?.ar
+            },
+            quantity: {
+                en: req.body.quantity_en || product.quantity?.en,
+                ar: req.body.quantity_ar || product.quantity?.ar
+            },
+            category: req.body.categoryId || product.category,
+            image: images,
+            logo: logo,
+            tableData: tableData,
+            stoargecondition: {
+                en: req.body.stoargecondition_en || product.stoargecondition?.en,
+                ar: req.body.stoargecondition_ar || product.stoargecondition?.ar
+            },
+
+            // animalTypes: req.body.animalTypes ? JSON.parse(req.body.animalTypes) : product.animalTypes
+        },
+        { new: true }
+    );
+
+    return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200);
+});
+
+
+
+
+
+
+
+
+
+
+
 
 
 

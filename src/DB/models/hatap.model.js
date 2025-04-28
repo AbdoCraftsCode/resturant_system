@@ -24,12 +24,12 @@ const hatapSchema = new mongoose.Schema(
         // }],
 
 
-        // stoargecondition: {
-        //     en: { type: String, },
-        //     ar: { type: String, }
+        stoargecondition: {
+            en: { type: String, },
+            ar: { type: String, }
 
 
-        // },
+        },
 
 
         tableData: [{
