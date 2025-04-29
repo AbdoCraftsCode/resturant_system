@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCategory, createdepatment, createMostawdaa, createSocialMedia, deleteCategory, deletedepartment, deleteMix, deleteMostawdaa, getAllProductsWithWarehouses, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, sendNotificationToUser, updateCategory, updatedepartment, updateMostawdaa, updateNotification, updateSocialMedia } from "./service/category.service.js";
+import { createCategory, createdepatment, createMostawdaa, createSocialMedia, deleteCategory, deletedepartment, deleteMix, deleteMostawdaa, getAllProductsWithWarehouses, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, savetoken, sendnotification, sendNotificationToUser, updateCategory, updatedepartment, updateMostawdaa, updateNotification, updateSocialMedia } from "./service/category.service.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { endpoint } from "./category.authrize.js";
@@ -81,10 +81,15 @@ router.delete("/deleteMostawdaa/:mostawdaaId",
     deleteMostawdaa
 )
 
+
+
 router.post("/getCategory", getCategories)
 router.delete("/deleteMix/:mixId", deleteMix)
 router.post("/updateSocialMedia", updateSocialMedia)
 router.post("/createSocialMedia", createSocialMedia)
+
+router.post("/savetoken", savetoken)
+router.post("/sendnotification", sendnotification)
 router.get("/getdepartment", getdepartment)
 router.get("/getSocialMedia", getSocialMedia)
 router.get("/getAllProductsWithWarehouses", getAllProductsWithWarehouses)

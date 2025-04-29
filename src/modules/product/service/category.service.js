@@ -12,6 +12,7 @@ import { ProductModel } from "../../../DB/models/product.model.js";
 import admin from 'firebase-admin';
 import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
 import { mixModel } from "../../../DB/models/mix.model.js";
+import { NotificationModel } from "../../../DB/models/notification.model.js";
 export const createCategory = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user); 
     if (!["Admin", "Owner"].includes(req.user.role)) {
@@ -783,10 +784,68 @@ async function sendNotification(deviceToken, title, body) {
 
 // مثال استخدام
 // sendNotification(
-//     'ek-wq43JQJGwbhbBdVLhjJ:APA91bH-Zy8zaGG_G1t1MnI9av220zGYpVauqmy7d3WKcE4Ck-0ioy7d2pwG2soR7VOPmdy6pAm86rsWRUkTD5p63wZ_LWTO90B08NjbxG2DrGuFpMrXHzU',
+//     'e7WLm-VzRK-5GYOkcFHn6h:APA91bGuirefJfC5cfRTAhJIlft6KLq9q9qCcixADyuwW0ls2qEsfmkWguLuK8sEiO37XZ2y8TujlL2UcaC2_lOXtMje2rnengioJBYz4fdq2NmwoJUSW5I',
 //     '💡 إشعار تجريبي',
 //     'هذا مجرد اختبار من الباك اند'
 // );
+
+
+
+// مثلا: POST /api/save-token
+
+
+
+export const savetoken = asyncHandelr(async (req, res, next) => {
+    const { userId, fcmToken } = req.body;
+
+    if (!userId || !fcmToken) {
+        return res.status(400).json({ message: "userId و fcmToken مطلوبين" });
+    }
+
+    try {
+        await Usermodel.findByIdAndUpdate(userId, { fcmToken });
+        res.json({ message: "تم حفظ التوكن بنجاح" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "حدث خطأ أثناء حفظ التوكن" });
+    }
+    
+});
+
+export const sendnotification = asyncHandelr(async (req, res, next) => {
+    const { userId, title, body } = req.body;
+
+    if (!userId || !title || !body) {
+        return res.status(400).json({ message: "userId و title و body مطلوبين" });
+    }
+
+    try {
+        const user = await Usermodel.findById(userId);
+        if (!user || !user.fcmToken) {
+            return res.status(404).json({ message: "المستخدم غير موجود أو لا يحتوي على FCM Token" });
+        }
+
+        const message = {
+            notification: { title, body },
+            token: user.fcmToken,
+        };
+
+        await NotificationModel.create({ user: user._id, title, body });
+
+        const response = await admin.messaging().send(message);
+        console.log('✅ تم إرسال الإشعار:', response);
+
+        res.json({ message: "تم إرسال الإشعار بنجاح", response });
+    } catch (error) {
+        console.error('❌ فشل إرسال الإشعار:', error);
+        res.status(500).json({ message: "فشل إرسال الإشعار", error: error.message });
+    }
+
+});
+
+// send-notification route
+
+
 
 
 

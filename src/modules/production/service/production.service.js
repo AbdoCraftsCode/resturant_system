@@ -1513,6 +1513,10 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
 });
 
 
+
+
+
+
 export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
@@ -1531,8 +1535,10 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
             select: "name _id"
         });
 
-    // ⚠️ بعد الـ populate، بعض المنتجات ممكن تكون null لو مش من نفس القسم
-    const filteredMixes = mixes.filter(mix => mix.Product !== null);
+    // ✅ فلترة أي mix مفقود فيه المنتج أو المستودع
+    const filteredMixes = mixes.filter(
+        mix => mix.Product !== null && mix.Mostawdaa !== null
+    );
 
     if (!filteredMixes.length) {
         return next(new Error("❌ لا توجد أي بيانات!", { cause: 404 }));
@@ -1571,6 +1577,10 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
         products: paginatedProducts
     });
 });
+
+
+
+
 
 
 
