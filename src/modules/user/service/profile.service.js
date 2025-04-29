@@ -89,12 +89,20 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم جلب بيانات المستخدم بنجاح!", 200, {
         username: user.username,
+        id: user._id, 
         Points: user.Points,
         notifications: user.notifications
       
          // ✅ إرجاع الإشعارات باللغة المطلوبة
     });
 });
+
+
+
+
+
+
+
 
 // export const getAllUsers = asyncHandelr(async (req, res, next) => {
 //     let { page, limit } = req.query;

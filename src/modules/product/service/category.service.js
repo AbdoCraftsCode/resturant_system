@@ -288,7 +288,7 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
     if (!["Admin", "Owner"].includes(req.user.role)) {
         return next(new Error("Unauthorized! Only Admins or Owners can send notifications.", { cause: 403 }));
     }
-
+ 
     if (!req.body.email) {
         return next(new Error("❌ يجب توفير البريد الإلكتروني!", { cause: 400 }));
     }
@@ -302,7 +302,6 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
         secure_url = uploadResult.secure_url;
         public_id = uploadResult.public_id;
     }
-    // ❌ لا توجد صورة مرفوعة، لكن لن نرجع خطأ الآن
 
     const user = await Usermodel.findOne({ email: req.body.email });
 
@@ -329,12 +328,37 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
         remainingAmount: req.body.remainingAmount,
         orderNumber: req.body.orderNumber,
         ordervalue: req.body.ordervalue,
-        image: { secure_url, public_id }, // لو مفيش صورة هتبقى null، مش مشكلة
+        image: { secure_url, public_id },
         updatedBy: req.user._id
     };
 
     user.notifications.push(newNotification);
     await user.save();
+
+    // ✅ تخزين الإشعار في قاعدة بيانات NotificationModel
+    await NotificationModel.create({
+        user: user._id,
+        title: "📩 إشعار جديد بخصوص الطلب",
+        body: `تم تحديث حالة الطلب إلى: ${req.body.orderStatus_ar || "غير محدد"}`,
+    });
+
+    // ✅ إرسال إشعار للموبايل إذا كان fcmToken موجود
+    if (user.fcmToken) {
+        const message = {
+            notification: {
+                title: "📩 إشعار جديد",
+                body: `تم تحديث حالة الطلب إلى: ${req.body.orderStatus_ar || "غير محدد"}`,
+            },
+            token: user.fcmToken,
+        };
+
+        try {
+            await admin.messaging().send(message);
+            console.log("✅ تم إرسال إشعار FCM للمستخدم");
+        } catch (error) {
+            console.error("❌ فشل إرسال إشعار FCM:", error.message);
+        }
+    }
 
     return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 201);
 });
