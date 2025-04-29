@@ -812,6 +812,8 @@ export const savetoken = asyncHandelr(async (req, res, next) => {
     
 });
 
+
+
 export const sendnotification = asyncHandelr(async (req, res, next) => {
     const { userId, title, body } = req.body;
 
@@ -842,6 +844,98 @@ export const sendnotification = asyncHandelr(async (req, res, next) => {
     }
 
 });
+
+
+export const notifyall = asyncHandelr(async (req, res, next) => {
+    const { title, body } = req.body;
+
+    if (!title || !body) {
+        return res.status(400).json({ message: "العنوان والمحتوى مطلوبين" });
+    }
+
+    try {
+        const users = await Usermodel.find({ fcmToken: { $ne: null } });
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let user of users) {
+            try {
+                // 1. إرسال الإشعار
+                await sendNotification(user.fcmToken, title, body);
+
+                // 2. تخزين الإشعار في قاعدة البيانات
+                await NotificationModel.create({
+                    user: user._id,
+                    title,
+                    body,
+                    isRead: false
+                });
+
+                successCount++;
+            } catch (e) {
+                console.error(`❌ فشل إرسال/تخزين إشعار للمستخدم ${user._id}:`, e.message);
+                failCount++;
+            }
+        }
+
+        return res.status(200).json({
+            message: "✅ تم تنفيذ إرسال وتخزين الإشعارات",
+            totalUsers: users.length,
+            successCount,
+            failCount
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "❌ حدث خطأ أثناء إرسال الإشعارات" });
+    }
+});
+
+
+
+export const getUserNotifications = asyncHandelr(async (req, res) => {
+    const userId = req.user._id; // تأكد إنك ممرر `auth middleware`
+
+    const notifications = await NotificationModel.find({ user: userId })
+        .sort({ createdAt: -1 }); // الأحدث أولًا
+
+    res.status(200).json({
+        message: "📬 تم جلب الإشعارات",
+        notifications
+    });
+});
+
+
+
+export const markNotificationAsRead = asyncHandelr(async (req, res) => {
+    const { id } = req.params;
+
+    const notification = await NotificationModel.findById(id);
+    if (!notification) {
+        return res.status(404).json({ message: "❌ الإشعار غير موجود" });
+    }
+
+    notification.isRead = true;
+    await notification.save();
+
+    res.status(200).json({ message: "✅ تم تعليم الإشعار كمقروء" });
+});
+
+
+
+export const markAllAsRead = asyncHandelr(async (req, res) => {
+    const userId = req.user._id;
+
+    await NotificationModel.updateMany(
+        { user: userId, isRead: false },
+        { $set: { isRead: true } }
+    );
+
+    res.status(200).json({ message: "✅ تم تعليم كل الإشعارات كمقروءة" });
+});
+
+
+
 
 // send-notification route
 
