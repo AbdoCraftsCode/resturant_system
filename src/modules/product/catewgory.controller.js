@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCategory, createdepatment, createMostawdaa, createSocialMedia, deleteCategory, deletedepartment, deleteMix, deleteMostawdaa, getAllProductsWithWarehouses, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, getUserNotifications, markAllAsRead, markNotificationAsRead, notifyall, savetoken, sendnotification, sendNotificationToUser, updateCategory, updatedepartment, updateMostawdaa, updateNotification, updateSocialMedia } from "./service/category.service.js";
+import { createCategory, createdepatment, createMostawdaa, createSocialMedia, deleteCategory, deletedepartment, deleteFcmToken, deleteMix, deleteMostawdaa, getAllProductsWithWarehouses, getCategories, getdepartment, getNotificationsByEmail, getSocialMedia, getUserNotifications, markAllAsRead, markNotificationAsRead, notifyall, savetoken, sendnotification, sendNotificationToUser, updateCategory, updatedepartment, updateMostawdaa, updateNotification, updateSocialMedia } from "./service/category.service.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { endpoint } from "./category.authrize.js";
@@ -97,6 +97,8 @@ router.post("/sendnotification", sendnotification)
 router.post("/markNotificationAsRead/:id", markNotificationAsRead)
 
 router.get("/getdepartment", getdepartment)
+router.delete("/deleteFcmToken", authentication(),deleteFcmToken)
+
 router.get("/getSocialMedia", getSocialMedia)
 
 router.get("/getUserNotifications", authentication(),getUserNotifications)

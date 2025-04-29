@@ -958,6 +958,24 @@ export const markAllAsRead = asyncHandelr(async (req, res) => {
     res.status(200).json({ message: "✅ تم تعليم كل الإشعارات كمقروءة" });
 });
 
+export const deleteFcmToken = asyncHandelr(async (req, res) => {
+    const userId = req.user._id;
+
+    try {
+        const user = await Usermodel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "❌ المستخدم غير موجود!" });
+        }
+
+        user.fcmToken = null; // 🧹 حذف التوكن
+        await user.save();
+
+        res.status(200).json({ message: "✅ تم حذف FCM Token بنجاح" });
+    } catch (error) {
+        console.error("❌ خطأ أثناء حذف التوكن:", error);
+        res.status(500).json({ message: "حدث خطأ أثناء حذف التوكن", error: error.message });
+    }
+});
 
 
 
