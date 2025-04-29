@@ -1468,13 +1468,8 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // حساب العدد الكلي قبل الباجيناشن
-    const totalCount = await mixModel.countDocuments({ Mostawdaa: mostawdaaId });
-
     const mixes = await mixModel.find({ Mostawdaa: mostawdaaId })
-        .sort({ order: 1 }) // ✅ ترتيب حسب order
-        .skip(skip)
-        .limit(limit)
+        .sort({ order: 1 })
         .populate({
             path: "Product",
             select: "-__v -createdAt -updatedAt"
@@ -1484,12 +1479,18 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
             select: "name"
         });
 
-    if (!mixes.length) {
-        return next(new Error("❌ لا توجد منتجات مرتبطة بهذا المستودع!", { cause: 404 }));
+    // ✅ تجاهل التركيبات اللي المنتج فيها null (محذوف)
+    const validMixes = mixes.filter(mix => mix.Product !== null);
+
+    if (!validMixes.length) {
+        return next(new Error("❌ لا توجد منتجات صالحة مرتبطة بهذا المستودع!", { cause: 404 }));
     }
 
-    const formattedData = mixes.map((mix, index) => ({
-        index: skip + index + 1, // ✅ ترقيم يبدأ من رقم العنصر الحقيقي في الصفحات
+    const totalCount = validMixes.length;
+    const paginatedMixes = validMixes.slice(skip, skip + limit);
+
+    const formattedData = paginatedMixes.map((mix, index) => ({
+        index: skip + index + 1,
         _id: mix._id,
         quantity: mix.quantity,
         newprice: mix.newprice,
@@ -1504,7 +1505,7 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     return successresponse(res, "✅ تم جلب المنتجات الخاصة بالمستودع!", 200, {
-        mostawdaaName: mixes[0].Mostawdaa.name,
+        mostawdaaName: validMixes[0].Mostawdaa.name,
         currentPage: page,
         totalPages,
         totalProducts: totalCount,
