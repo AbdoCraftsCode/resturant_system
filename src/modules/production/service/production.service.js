@@ -5,6 +5,7 @@ import { CategoryModel } from "../../../DB/models/Category.model.js";
 import { HatapModel } from "../../../DB/models/hatap.model.js";
 import { mixModel } from "../../../DB/models/mix.model.js";
 import { MostawdaaModel } from "../../../DB/models/mostoda3.model.js";
+import { AdminNotificationModel } from "../../../DB/models/notification.admin.model.js";
 
 import { OrderModel } from "../../../DB/models/order.model.js";
 import { ProductModel } from "../../../DB/models/product.model.js";
@@ -928,9 +929,61 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
         notes
     });
 
+    // 🟢 إشعار للأدمن
+    await AdminNotificationModel.create({
+        user: req.user._id,
+        title: "طلب جديد",
+        body: `${req.user.username} قام بعمل طلب جديد`,
+    });
+
     return successresponse(res, "✅ تم إنشاء الطلب بنجاح!", 201);
 });
 
+
+
+export const getAdminNotifications = asyncHandelr(async (req, res, next) => {
+    const { isRead } = req.query;
+
+    const filter = {};
+    if (isRead === "true") filter.isRead = true;
+    else if (isRead === "false") filter.isRead = false;
+
+    const notifications = await AdminNotificationModel.find(filter)
+        .populate("user", "firstName lastName email")
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        message: "🗂️ إشعارات الأدمن",
+        notifications
+    });
+});
+
+
+export const markAllAdminNotificationsAsRead = asyncHandelr(async (req, res, next) => {
+    const result = await AdminNotificationModel.updateMany(
+        { isRead: false },
+        { $set: { isRead: true } }
+    );
+
+    res.status(200).json({
+        message: "✅ تم تعيين جميع الإشعارات كمقروءة",
+        modifiedCount: result.modifiedCount
+    });
+});
+
+export const markAdminNotificationAsRead = asyncHandelr(async (req, res, next) => {
+    const { id } = req.params;
+
+    const notification = await AdminNotificationModel.findById(id);
+    if (!notification) {
+        return next(new Error("الإشعار غير موجود", { cause: 404 }));
+    }
+
+    notification.isRead = true;
+    await notification.save();
+
+    res.status(200).json({ message: "✅ تم تعيين الإشعار كمقروء" });
+});
 
 
 
