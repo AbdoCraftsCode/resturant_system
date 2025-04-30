@@ -1493,9 +1493,18 @@ export const getAllImages = asyncHandelr(async (req, res, next) => {
 export const createMix = asyncHandelr(async (req, res, next) => {
     console.log("User Data:", req.user);
 
-  
     if (!["Admin", "Owner"].includes(req.user.role)) {
         return next(new Error("Unauthorized! Only Admins or Owners can create Mix.", { cause: 403 }));
+    }
+
+    // ✅ التحقق من التكرار
+    const existingMix = await mixModel.findOne({
+        Mostawdaa: req.body.Mostawdaa,
+        Product: req.body.Product
+    });
+
+    if (existingMix) {
+        return next(new Error("❌ هذا المنتج موجود بالفعل داخل هذا المستودع!", { cause: 400 }));
     }
 
     const mix = await mixModel.create({
@@ -1509,7 +1518,7 @@ export const createMix = asyncHandelr(async (req, res, next) => {
         }
     });
 
-    return successresponse(res, "Mix created successfully!", 201,);
+    return successresponse(res, "Mix created successfully!", 201);
 });
 
 
