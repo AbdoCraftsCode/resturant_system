@@ -1097,7 +1097,7 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
 export const getorder = asyncHandelr(async (req, res, next) => {
     const orders = await OrderModel.find({ user: req.user._id })
         .populate("user", "lastName firstName email mobileNumber")
-        .populate("products.productId", "name1 newprice");
+        .populate("products", "name1 newprice");
 
     if (orders.length === 0) {
         return next(new Error("❌ لا توجد طلبات لهذا المستخدم!", { cause: 404 }));
