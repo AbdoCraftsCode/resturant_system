@@ -65,7 +65,7 @@ router.get("/getAllBranches/admin", getAllBranches)
 router.get("/getAdminNotifications", getAdminNotifications)
 
 router.get("/getAllAdmins/admin", getAllAdmins)
-router.get("/getProductsByMostawdaa/:mostawdaaId", getProductsByMostawdaa)
+router.post("/getProductsByMostawdaa/:mostawdaaId", getProductsByMostawdaa)
 router.post("/getAllOrders", getAllOrders)
 router.post("/markAllAdminNotificationsAsRead", markAllAdminNotificationsAsRead)
 router.get("/getAllProductsWithMostawdaNames", getAllProductsWithMostawdaNames)
