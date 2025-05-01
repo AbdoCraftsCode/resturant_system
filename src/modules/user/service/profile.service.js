@@ -490,21 +490,25 @@ export const removeFromFavorite = async (req, res, next) => {
 
 export const getUserFavorites = async (req, res, next) => {
     try {
-        const userId = req.user._id; // استخراج userId من التوكن
+        const userId = req.user._id;
 
         const favorites = await FavoriteModel.find({ user: userId })
-            .populate("product", )
+            .populate("product")
             .sort({ createdAt: -1 });
-        // "name1 name2 newprice oldprice image"
-        if (favorites.length === 0) {
+
+        // حذف العناصر اللي product فيها null
+        const filteredFavorites = favorites.filter(fav => fav.product !== null);
+
+        if (filteredFavorites.length === 0) {
             return res.status(404).json({ message: "❌ لا توجد منتجات مفضلة حتى الآن!" });
         }
 
         return res.status(200).json({
             message: "✅ تم جلب المنتجات المفضلة بنجاح!",
-            data: favorites
+            data: filteredFavorites
         });
     } catch (error) {
         next(error);
     }
 };
+
