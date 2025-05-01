@@ -10,11 +10,71 @@ import { AdminNotificationModel } from "../../../DB/models/notification.admin.mo
 import { OrderModel } from "../../../DB/models/order.model.js";
 import { ProductModel } from "../../../DB/models/product.model.js";
 import Usermodel from "../../../DB/models/User.model.js";
-
+import admin from 'firebase-admin';
 import cloud from "../../../utlis/multer/cloudinary.js";
 import { asyncHandelr } from "../../../utlis/response/error.response.js";
 import { successresponse } from "../../../utlis/response/success.response.js";
 import bcrypt from "bcrypt"
+
+
+// const serviceAccount = {
+//     type: "service_account",
+//     project_id: "merba3-f8802",
+//     private_key_id: "3e7a5bb045c3be0f157873eaf27ac985b14c2565",
+//     private_key: `-----BEGIN PRIVATE KEY-----
+// MIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCeNOD1B8bHVCy5
+// sGPBgTnQCeGItj2/xY5RxvEzdpcKX3c9LpqwuVOwuPPt07jgjTypMX7ybC/VJVzw
+// imChZLPYo3lodhaZDVHGAjKeRcukomMn4VrGucyIyKlz4XB5KMBXzY4XjEJfq557
+// hI23LExgW+rK6WMLGvKtOOdiFUALKRSXofchOuCEGWW/n+aZ6+85m2TdY9wMFeEU
+// efFIS13LvgI5yFg38jXTviECrc6Ni/P2aP5E9TfBU7JHmu59Da3P0JtGnwm2mhap
+// Uvhoz5CoUVrKsZe0vimjZwm9ue8godh6y18MYjChwDZzpcjgM8roZnjiEAw2BAGR
+// H+SqSUzFAgMBAAECgf8cDa42q3TfL5O+uyLNY2CzMXwtVGyoGPrVNRhJ29WkEHnQ
+// gIP/8Nz6fGO9A/4MRIVIQ9eJckOetU4h80Do6kpODxt21B3O9ewmuQqea5LY+4uH
+// WR+q40/Fi5OpvBCkwu4U4cu7I7gohSxddFrzwA2vWW/LeRlYo8O4N92MLOOyhpWQ
+// BFeh3fxR1mK8ktZFF0f7yCaMmOPFZeOWF4YueBjTVfQwtxEskFHHR+uhNCdgTlBo
+// r2o30leAHJjrojDhbueraDcf+jrU0Bu9icE4PWBEuVfpQ/apTse51uI/2vhGgFOL
+// +0Mg4ILASrS+ndSK0TdH4ajEiLiU+XTjcpvWWkECgYEAz78L+JxwN2IZH5T0uSe4
+// E4UYK7wDdjzcKPdCo4JOjAlrsdvDbhq2iDGaetLQJUcU6sYeGhvfWe0gkT7zTrvv
+// KEsJrPwBZztc9AsrFo00pSBMchSpLZnlC5s0MuIPYSC/yqmW30VeMprKKg4IQyu/
+// vcEa+Mo8r2u08DMuvakPIAUCgYEAwvQdUgq9/Aqdz+ho5XfuVc0rEAHrsCzmDnpZ
+// Y9ncalHlFurIhi6rs/SHOyCoiGXo/YdBWCq6z4HMvTYN9qhj/tnfU+BSMCElZGQI
+// Xj2OavaWtPl4R3Xi1wIP2N2Wxs2wMMMABsDEoxrdyqSTc3bPGItuNkA/56GtCq6T
+// D/mm1cECgYBDeLQFoaFci3LHbBRzUjAZvt9TzPN+4lNKxsuQ2VBzcNfWYx680tY3
+// s4yNmYxanxRvD7tVFXpb9YTfR4e0KZuKBZz13r8B7SjKZhovb9sKSkwpvQYZNmNK
+// erTgVcVS8VT5GE1U5G2sl9NTB02tqzbSBTaiWOSOwLd6T9U9afvslQKBgGm8bv6l
+// Vt+RfoBaBDKY9opQyc9Xy1X1NB2cHEl8ywBbRI5GbtXgED59HK9kCiRYaaLALh+8
+// pS+QrdPdsnsaX4nE70yVuN3jzF0DqEo8xraa4ahsOeFAPfTxaFjt7i4LN0lrKeN/
+// v+ba1npnApY4VSBx1yfTdxWRacIGZzrd46/BAoGATZke5s3oS8OX3hvr5zULP84J
+// iHTqGpWHYQzkRFxN7b934nTO6GsF+Rx4xf5tlZldnjo2HB5KpkIEoT/6AcpiSTYQ
+// PMXdIUigLU5Miv9iwRSOQSUibSPnlSyCS5wKXQV/wVPoU+B1yrEr71Ii3BxEFQ3b
+// Ucztf8+48J9J+qMzTbQ=
+// -----END PRIVATE KEY-----`,
+//     client_email: "firebase-adminsdk-fbsvc@merba3-f8802.iam.gserviceaccount.com",
+//     client_id: "116339282509322684729",
+//     auth_uri: "https://accounts.google.com/o/oauth2/auth",
+//     token_uri: "https://oauth2.googleapis.com/token",
+//     auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+//     client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40merba3-f8802.iam.gserviceaccount.com",
+//     universe_domain: "googleapis.com",
+// };
+
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount),
+// })
+// دالة إرسال إشعار
+// async function sendNotification(deviceToken, title, body) {
+//     const message = {
+//         notification: { title, body },
+//         token: deviceToken,
+//     };
+
+//     try {
+//         const response = await admin.messaging().send(message);
+//         console.log('✅ تم إرسال الإشعار:', response);
+//     } catch (error) {
+//         console.error('❌ فشل إرسال الإشعار:', error);
+//     }
+// }
 
 
 
@@ -956,10 +1016,21 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
         body: `${req.user.username} قام بعمل طلب جديد`,
     });
 
+    // 🟡 إرسال إشعار FCM للمستخدم
+    const user = await Usermodel.findById(req.user._id);
+    if (user?.fcmToken) {
+        await admin.messaging().send({
+            notification: {
+                title: "📦 تم استلام طلبك",
+                body: "✅ تم إرسال الطلب بنجاح، وسيتم الرد عليك في أقرب وقت."
+            },
+            token: user.fcmToken
+        });
+    }
+
     return successresponse(res, "✅ تم إنشاء الطلب بنجاح!", 201);
 });
-
-
+ 
 
 export const getAdminNotifications = asyncHandelr(async (req, res, next) => {
     const { isRead } = req.query;
