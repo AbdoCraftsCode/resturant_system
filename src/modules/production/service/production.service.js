@@ -671,26 +671,40 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
 
     // تحديث الصور
     let images = [...product.image];
-    if (req.files?.image && req.files.image.length > 0) {
+    if (req.files?.image?.length > 0) {
         await Promise.all(product.image.map(img => cloud.uploader.destroy(img.public_id)));
         images = await Promise.all(req.files.image.map(async (file) => {
             const uploadedImage = await cloud.uploader.upload(file.path, {
                 folder: `products/${req.user._id}`
             });
-            return { secure_url: uploadedImage.secure_url, public_id: uploadedImage.public_id };
+            return {
+                secure_url: uploadedImage.secure_url,
+                public_id: uploadedImage.public_id
+            };
         }));
+    } else if ('image' in req.body && (!req.files?.image || req.files.image.length === 0)) {
+        // إذا تم إرسال المفتاح بدون صور
+        await Promise.all(product.image.map(img => cloud.uploader.destroy(img.public_id)));
+        images = [];
     }
 
     // تحديث اللوجو
     let logo = [...(product.logo || [])];
-    if (req.files?.logo && req.files.logo.length > 0) {
+    if (req.files?.logo?.length > 0) {
         await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
         logo = await Promise.all(req.files.logo.map(async (file) => {
             const uploadedLogo = await cloud.uploader.upload(file.path, {
                 folder: `products/${req.user._id}/logo`
             });
-            return { secure_url: uploadedLogo.secure_url, public_id: uploadedLogo.public_id };
+            return {
+                secure_url: uploadedLogo.secure_url,
+                public_id: uploadedLogo.public_id
+            };
         }));
+    } else if ('logo' in req.body && (!req.files?.logo || req.files.logo.length === 0)) {
+        // إذا تم إرسال مفتاح logo بدون صور
+        await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
+        logo = [];
     }
 
     // معالجة tableData
@@ -719,6 +733,10 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
             name1: {
                 en: req.body.name1_en || product.name1.en,
                 ar: req.body.name1_ar || product.name1.ar
+            },
+            country: {
+                en: req.body.country_en || product.country.en,
+                ar: req.body.country_ar || product.country.ar
             },
             name2: {
                 en: req.body.name2_en || product.name2.en,
@@ -749,6 +767,8 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200);
 });
+
+
 
 
 
