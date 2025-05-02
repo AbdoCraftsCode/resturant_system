@@ -7,8 +7,8 @@ const mixSchema = new mongoose.Schema({
     oldprice: { type: Number, },
     order: { type: Number, default: 0 } ,
     quantity: {
-        en: { type: String, required: true, trim: true },
-        ar: { type: String, required: true, trim: true }
+        en: { type: String,  trim: true },
+        ar: { type: String,  trim: true }
     },
 
 }, { timestamps: true });

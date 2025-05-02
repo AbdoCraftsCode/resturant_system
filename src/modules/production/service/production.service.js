@@ -1609,7 +1609,7 @@ export const createMix = asyncHandelr(async (req, res, next) => {
         }
     });
 
-    return successresponse(res, "Mix created successfully!", 201);
+    return successresponse(res, "الف مبروك يا فندم تم اضافه المنتج داخل المستودع بنجاح", 201);
 });
 
 
