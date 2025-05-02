@@ -1686,7 +1686,7 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
         })
         .populate({
             path: "Mostawdaa",
-            select: "name _id"
+            // select: "name _id"
         });
 
     // ✅ فلترة أي mix مفقود فيه المنتج أو المستودع
@@ -1710,10 +1710,9 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
             });
         }
 
-        productMap.get(productId).Mostawdaat.add(JSON.stringify({
-            _id: mix.Mostawdaa._id,
-            name: mix.Mostawdaa.name
-        }));
+        productMap.get(productId).Mostawdaat.add(JSON.stringify(mix.Mostawdaa));
+
+
     });
 
     const allProducts = Array.from(productMap.values()).map(item => ({
