@@ -825,7 +825,7 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
         { new: true }
     );
 
-    return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200);
+    return successresponse(res, "✅ المنتج تم تحديثه بنجاح!", 200,);
 });
 
 
@@ -1672,16 +1672,16 @@ export const getProductsByMostawdaa = asyncHandelr(async (req, res, next) => {
 
 
 export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, next) => {
-    const page = parseInt(req.query.page) || 1;
+    const page = req.query.page ? parseInt(req.query.page) : null;
     const limit = 10;
-    const skip = (page - 1) * limit;
+    const skip = page ? (page - 1) * limit : 0;
     const { departmentId } = req.query;
 
     const mixes = await mixModel.find({})
         .sort({ order: 1 })
         .populate({
             path: "Product",
-            match: departmentId ? { Department: departmentId } : {}, // ✅ فلترة المنتج حسب القسم
+            match: departmentId ? { Department: departmentId } : {},
             select: "-__v -createdAt -updatedAt"
         })
         .populate({
@@ -1689,7 +1689,6 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
             // select: "name _id"
         });
 
-    // ✅ فلترة أي mix مفقود فيه المنتج أو المستودع
     const filteredMixes = mixes.filter(
         mix => mix.Product !== null && mix.Mostawdaa !== null
     );
@@ -1711,8 +1710,6 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
         }
 
         productMap.get(productId).Mostawdaat.add(JSON.stringify(mix.Mostawdaa));
-
-
     });
 
     const allProducts = Array.from(productMap.values()).map(item => ({
@@ -1720,17 +1717,19 @@ export const getAllProductsWithMostawdaNames = asyncHandelr(async (req, res, nex
         Mostawdaat: Array.from(item.Mostawdaat).map(str => JSON.parse(str))
     }));
 
-    const paginatedProducts = allProducts.slice(skip, skip + limit);
-    const totalPages = Math.ceil(allProducts.length / limit);
+    const paginatedProducts = page
+        ? allProducts.slice(skip, skip + limit)
+        : allProducts;
+
+    const totalPages = page ? Math.ceil(allProducts.length / limit) : 1;
 
     return successresponse(res, "✅ تم جلب المنتجات مع أسماء المستودعات!", 200, {
-        currentPage: page,
+        currentPage: page || 1,
         totalPages,
         totalProducts: allProducts.length,
         products: paginatedProducts
     });
 });
-
 
 
 

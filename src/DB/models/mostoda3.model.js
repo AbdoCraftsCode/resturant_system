@@ -14,20 +14,20 @@ const MostawdaaSchema = new mongoose.Schema(
             public_id: { type: String, required: true }   // مهم لحذف الصور من Cloudinary
         },
         location1: {
-            en: { type: String, required: true, trim: true },
-            ar: { type: String, required: true, trim: true }
+            en: { type: String,  trim: true },
+            ar: { type: String,  trim: true }
         },
         location2: {
-            en: { type: String, required: true, trim: true },
-            ar: { type: String, required: true, trim: true }
+            en: { type: String,  trim: true },
+            ar: { type: String,  trim: true }
         },
         owner: {
-            en: { type: String, required: true, trim: true },
-            ar: { type: String, required: true, trim: true }
+            en: { type: String,  trim: true },
+            ar: { type: String,  trim: true }
         },
         workdate: {
-            en: { type: String, required: true, trim: true },
-            ar: { type: String, required: true, trim: true }
+            en: { type: String, trim: true },
+            ar: { type: String,  trim: true }
         },
         phone: {
             type: String,
