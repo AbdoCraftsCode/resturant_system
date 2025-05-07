@@ -31,7 +31,7 @@ const hatapSchema = new mongoose.Schema(
 
         },
 
-
+ 
         tableData: [{
             name: {
                 en: { type: String,  trim: true },
@@ -49,8 +49,8 @@ const hatapSchema = new mongoose.Schema(
         },
 
       
-        newprice: { type: Number, },
-        oldprice: { type: Number,  },
+        newprice: { type: String, },
+        oldprice: { type: String,  },
         description: {
             en: { type: String,  },
             ar: { type: String,  }
