@@ -864,14 +864,21 @@ export const updateHatap = asyncHandelr(async (req, res, next) => {
 
     // تحديث اللوجو
     let logo = [...(product.logo || [])];
-    if (req.files?.logo && req.files.logo.length > 0) {
+    if (req.files?.logo?.length > 0) {
         await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
         logo = await Promise.all(req.files.logo.map(async (file) => {
             const uploadedLogo = await cloud.uploader.upload(file.path, {
                 folder: `products/${req.user._id}/logo`
             });
-            return { secure_url: uploadedLogo.secure_url, public_id: uploadedLogo.public_id };
+            return {
+                secure_url: uploadedLogo.secure_url,
+                public_id: uploadedLogo.public_id
+            };
         }));
+    } else if ('logo' in req.body && (!req.files?.logo || req.files.logo.length === 0)) {
+        // إذا تم إرسال مفتاح logo بدون صور
+        await Promise.all(logo.map(img => cloud.uploader.destroy(img.public_id)));
+        logo = [];
     }
 
     // معالجة tableData
