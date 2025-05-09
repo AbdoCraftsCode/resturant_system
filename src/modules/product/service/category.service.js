@@ -324,8 +324,18 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
             en: req.body.orderStatus_en,
             ar: req.body.orderStatus_ar
         },
-        orderPaid: req.body.orderPaid,
-        remainingAmount: req.body.remainingAmount,
+        orderPaid: [
+            {
+                amount: req.body.orderPaid,
+                date: new Date()
+            }
+        ],
+        remainingAmount: [
+            {
+                amount: req.body.remainingAmount,
+                date: new Date()
+            }
+        ],
         orderNumber: req.body.orderNumber,
         ordervalue: req.body.ordervalue,
         image: { secure_url, public_id },
@@ -427,9 +437,16 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
             en: req.body.orderStatus_en || user.notifications[notificationIndex].orderStatus.en,
             ar: req.body.orderStatus_ar || user.notifications[notificationIndex].orderStatus.ar
         },
-        orderPaid: req.body.orderPaid || user.notifications[notificationIndex].orderPaid,
+
+        orderPaid: req.body.orderPaid
+            ? [...(user.notifications[notificationIndex].orderPaid || []), { amount: req.body.orderPaid, date: new Date() }]
+            : user.notifications[notificationIndex].orderPaid,
+        remainingAmount: req.body.remainingAmount
+            ? [...(user.notifications[notificationIndex].remainingAmount || []), { amount: req.body.remainingAmount, date: new Date() }]
+            : user.notifications[notificationIndex].remainingAmount,
+        // orderPaid: req.body.orderPaid || user.notifications[notificationIndex].orderPaid,
         ordervalue: req.body.ordervalue || user.notifications[notificationIndex].ordervalue,
-        remainingAmount: req.body.remainingAmount || user.notifications[notificationIndex].remainingAmount,
+        // remainingAmount: req.body.remainingAmount || user.notifications[notificationIndex].remainingAmount,
         orderNumber: req.body.orderNumber || user.notifications[notificationIndex].orderNumber,
         image: secure_url ? { secure_url, public_id } : user.notifications[notificationIndex].image,
         updatedBy: req.user._id

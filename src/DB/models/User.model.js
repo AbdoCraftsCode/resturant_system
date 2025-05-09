@@ -32,6 +32,21 @@ const userSchema = new mongoose.Schema(
 
         notifications: [
             {
+
+
+                orderPaid: [
+                    {
+                        amount: { type: Number },
+                        date: { type: Date, default: Date.now }
+                    }
+                ],
+                remainingAmount: [
+                    {
+                        amount: { type: Number },
+                        date: { type: Date, default: Date.now }
+                    }
+                ],
+
                 orderDate: {
                     type: String,
                 },
@@ -45,15 +60,15 @@ const userSchema = new mongoose.Schema(
                     ar: { type: String, required: true },
                 },
 
-                orderPaid: {
-                    type: Number,
-                },
+                // orderPaid: {
+                //     type: Number,
+                // },
                 ordervalue: {
                     type: Number,
                 },
-                remainingAmount: {
-                    type: Number,
-                },
+                // remainingAmount: {
+                //     type: Number,
+                // },
                 orderNumber: {
                     type: Number,
                 },
