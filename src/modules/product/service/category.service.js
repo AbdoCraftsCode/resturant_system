@@ -324,23 +324,18 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
             en: req.body.orderStatus_en,
             ar: req.body.orderStatus_ar
         },
-        orderPaid: [
-            {
-                amount: req.body.orderPaid,
-                date: new Date()
-            }
-        ],
-        remainingAmount: [
-            {
-                amount: req.body.remainingAmount,
-                date: new Date()
-            }
-        ],
+        orderPaid: req.body.orderPaid
+            ? [{ amount: req.body.orderPaid, date: new Date() }]
+            : [],
+        remainingAmount: req.body.remainingAmount
+            ? [{ amount: req.body.remainingAmount, date: new Date() }]
+            : [],
         orderNumber: req.body.orderNumber,
         ordervalue: req.body.ordervalue,
         image: { secure_url, public_id },
         updatedBy: req.user._id
     };
+
 
     user.notifications.push(newNotification);
     await user.save();
@@ -372,6 +367,8 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "✅ تم إرسال الإشعار بنجاح!", 201);
 });
+
+
 
 
 
