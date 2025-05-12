@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
-const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$ZHEfQKrayDl6V3JwOwnyreovYvhG.zTMW6mIedMEOjjoTr2R367Zy";
+const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$q76UhyFYQryENlRau7zuxuc34jwZt8B40JHyMF6v5IK/5p6pv9byq";
 const AUTHENTICA_OTP_URL = "https://api.authentica.sa/api/v1/send-otp";
 
 async function sendOTP(phone) {
