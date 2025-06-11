@@ -2,7 +2,7 @@ import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
 import {  sendotpphone, signup, signupwithGmail } from "./service/regestration.service.js";
-import { forgetpassword,   forgetPasswordphone,   login, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
+import { forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
 const routr = Router()
@@ -32,5 +32,6 @@ routr.post("/sendotpphone", sendotpphone)
 routr.post("/refreshToken",refreshToken)
 routr.post("/forgetpassword", forgetpassword)
 routr.post("/forgetpasswordphone", forgetPasswordphone)
+routr.post("/forgetPasswordphoneadmin", forgetPasswordphoneadmin)
 routr.post("/loginwithGmail", loginwithGmail)
 export default routr

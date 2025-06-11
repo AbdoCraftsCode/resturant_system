@@ -147,6 +147,8 @@ export const forgetpassword = asyncHandelr(async (req, res, next) => {
 });
 
 
+
+
 export const resetpassword = asyncHandelr(async (req, res, next) => {
     const { email, password, code } = req.body;
     console.log(email, password, code);
@@ -346,6 +348,64 @@ export const forgetPasswordphone = asyncHandelr(async (req, res, next) => {
         });
     }
 });
+
+
+
+export const forgetPasswordphoneadmin = asyncHandelr(async (req, res, next) => {
+    const { phone } = req.body;
+    console.log(phone);
+
+    if (!phone) {
+        return next(new Error("❌ يجب إدخال رقم الهاتف", { cause: 400 }));
+    }
+
+    // 🔍 البحث عن المستخدم باستخدام رقم الهاتف
+    const checkUser = await Usermodel.findOne({ mobileNumber: phone });
+    if (!checkUser) {
+        return next(new Error("❌ رقم الهاتف غير مسجل", { cause: 404 }));
+    }
+
+    // ✅ السماح فقط للمستخدمين من نوع Owner أو Admin
+    const allowedRoles = ['Owner', 'Admin'];
+    if (!allowedRoles.includes(checkUser.role)) {
+        return next(new Error("❌ هذا الحساب غير مصرح له بإعادة تعيين كلمة المرور", { cause: 403 }));
+    }
+
+    // 🔹 إرسال OTP عبر Authentica
+    try {
+        const response = await axios.post(
+            AUTHENTICA_OTP_URL,
+            {
+                phone: phone,
+                method: "whatsapp",  // أو "sms" حسب الحاجة
+                number_of_digits: 6,
+                otp_format: "numeric",
+                is_fallback_on: 0
+            },
+            {
+                headers: {
+                    "X-Authorization": AUTHENTICA_API_KEY,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+            }
+        );
+
+        console.log("✅ OTP تم إرساله بنجاح:", response.data);
+
+        return res.json({ success: true, message: "✅ OTP تم إرساله إلى رقم الهاتف بنجاح" });
+    } catch (error) {
+        console.error("❌ فشل في إرسال OTP:", error.response?.data || error.message);
+        return res.status(500).json({
+            success: false,
+            error: "❌ فشل في إرسال OTP",
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+
+
 
 
 export const resetPasswordphone= asyncHandelr(async (req, res, next) => {
