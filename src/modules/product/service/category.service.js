@@ -289,8 +289,8 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
         return next(new Error("Unauthorized! Only Admins or Owners can send notifications.", { cause: 403 }));
     }
  
-    if (!req.body.email) {
-        return next(new Error("❌ يجب توفير البريد الإلكتروني!", { cause: 400 }));
+    if (!req.body.username) {
+        return next(new Error("❌ يجب توفير اسم المستخدم !", { cause: 400 }));
     }
 
     let secure_url = null;
@@ -303,7 +303,7 @@ export const sendNotificationToUser = asyncHandelr(async (req, res, next) => {
         public_id = uploadResult.public_id;
     }
 
-    const user = await Usermodel.findOne({ email: req.body.email });
+    const user = await Usermodel.findOne({ username: req.body.username });
 
     if (!user) {
         return next(new Error("❌ المستخدم غير موجود!", { cause: 404 }));
@@ -378,14 +378,14 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
         return next(new Error("Unauthorized! Only Admins or Owners can send notifications.", { cause: 403 }));
     }
 
-    if (!req.body.email) {
-        return next(new Error("❌ يجب توفير البريد الإلكتروني!", { cause: 400 }));
+    if (!req.body.username) {
+        return next(new Error("❌ يجب توفير اسم المستخدم!", { cause: 400 }));
     }
 
     let secure_url = null;
     let public_id = null;
 
-    const user = await Usermodel.findOne({ email: req.body.email });
+    const user = await Usermodel.findOne({ username: req.body.username });
 
     if (!user) {
         return next(new Error("❌ المستخدم غير موجود!", { cause: 404 }));
@@ -469,11 +469,11 @@ export const updateNotification = asyncHandelr(async (req, res, next) => {
 export const getNotificationsByEmail = asyncHandelr(async (req, res, next) => {
  
 
-    if (!req.body.email) {
-        return next(new Error("❌ يجب توفير البريد الإلكتروني!", { cause: 400 }));
+    if (!req.body.username) {
+        return next(new Error("❌ يجب توفير اسم المستخدم!", { cause: 400 }));
     }
 
-    const user = await Usermodel.findOne({ email: req.body.email }).select("notifications");
+    const user = await Usermodel.findOne({ username: req.body.username }).select("notifications");
 
     if (!user) {
         return next(new Error("❌ المستخدم غير موجود!", { cause: 404 }));

@@ -14,7 +14,7 @@ import { FavoriteModel } from "../../../DB/models/favourite.model.js";
 export const Updateuseraccount = asyncHandelr(async (req, res, next) => {
     const user = await dbservice.findOne({
         model: Usermodel,
-        filter: { email: req.body.email } // تأكد من أن الإيميل موجود
+        filter: { username: req.body.username } // تأكد من أن الإيميل موجود
     });
 
     if (!user) {
@@ -24,7 +24,7 @@ export const Updateuseraccount = asyncHandelr(async (req, res, next) => {
     // تحديث بيانات المستخدم
     const updatedUser = await dbservice.findOneAndUpdate({
         model: Usermodel,
-        filter: { email: req.body.email },
+        filter: { username: req.body.username },
         data: req.body, // تمرير البيانات مباشرة
         options: { new: true }
     });
@@ -147,18 +147,17 @@ export const Getloginuseraccount = asyncHandelr(async (req, res, next) => {
 export const getAllUsers = asyncHandelr(async (req, res, next) => {
     // ✅ جلب المستخدمين مع تصفية الـ role
     const users = await Usermodel.find({ role: "User" })
-        .select("firstName lastName email mobileNumber city role notifications Points")
+        .select(" username  mobileNumber  role notifications Points")
         .lean(); // تحويل النتيجة إلى كائن عادي
 
     const totalUsers = users.length;
 
     const formattedUsers = users.map(user => ({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
+     
+        username: user.username,
         id: user._id,
         mobileNumber: user.mobileNumber,
-        city: user.city,
+ 
         role: user.role,
         Points: user.Points,
         notifications: user.notifications,

@@ -1142,7 +1142,7 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
         .sort({ createdAt: -1 }) // ترتيب تنازلي حسب وقت الإنشاء
         .skip(skip)
         .limit(limit)
-        .populate("user", "lastName firstName email mobileNumber")
+        .populate("user", "username   mobileNumber")
         .populate("products", "name1 newprice");
 
     // ترقيم الطلبات حسب الترتيب في الصفحة الحالية
@@ -1174,7 +1174,7 @@ export const getAllOrders = asyncHandelr(async (req, res, next) => {
 
 export const getorder = asyncHandelr(async (req, res, next) => {
     const orders = await OrderModel.find({ user: req.user._id })
-        .populate("user", "lastName firstName email mobileNumber")
+        .populate("user", "username   mobileNumber")
         .populate("products", "name1 newprice");
 
     if (orders.length === 0) {
@@ -1286,37 +1286,33 @@ export const cancelOrderr = asyncHandelr(async (req, res, next) => {
 
 
 export const createAdminByOwner = asyncHandelr(async (req, res, next) => {
-    const { email, firstName, lastName, mobileNumber, password, city } = req.body;
+    const { username, mobileNumber, password } = req.body;
 
-    // ✅ التحقق من أن المستخدم هو Owner
+    // ✅ تأكد من أن المستخدم الحالي هو المالك (Owner)
     const owner = await Usermodel.findById(req.user._id);
     if (!owner || owner.role !== "Owner") {
         return next(new Error("❌ ليس لديك صلاحية لإنشاء حساب Admin!", { cause: 403 }));
     }
 
-    // ✅ التحقق من عدم وجود البريد الإلكتروني مسبقًا
-    const existingEmail = await Usermodel.findOne({ email });
-    if (existingEmail) {
-        return next(new Error("❌ البريد الإلكتروني مستخدم بالفعل!", { cause: 400 })); 
+    // ✅ تحقق من أن اسم المستخدم ورقم الهاتف غير مستخدمين من قبل
+    const existingUsername = await Usermodel.findOne({ username });
+    if (existingUsername) {
+        return next(new Error("❌ اسم المستخدم مستخدم بالفعل!", { cause: 400 }));
     }
 
-    // ✅ التحقق من عدم وجود رقم الهاتف مسبقًا
     const existingPhone = await Usermodel.findOne({ mobileNumber });
     if (existingPhone) {
-        return next(new Error("❌ رقم الهاتف مستخدم بالفعل!", { cause: 400 })); 
+        return next(new Error("❌ رقم الهاتف مستخدم بالفعل!", { cause: 400 }));
     }
 
-    // ✅ إنشاء Admin جديد مع isConfirmed: true
+    // ✅ إنشاء Admin جديد
     const hashedPassword = bcrypt.hashSync(password, 8);
     const newAdmin = new Usermodel({
-        email,
-        firstName,
-        lastName,
+        username,
         mobileNumber,
         password: hashedPassword,
-        city,
-        role: "Admin", // تعيين الدور إلى Admin
-        isConfirmed: true // جعل الحساب مؤكد دائمًا
+        role: "Admin",
+        isConfirmed: true
     });
 
     await newAdmin.save();
@@ -1325,11 +1321,8 @@ export const createAdminByOwner = asyncHandelr(async (req, res, next) => {
         message: "✅ تم إنشاء حساب Admin بنجاح!",
         admin: {
             id: newAdmin._id,
-            email: newAdmin.email,
-            firstName: newAdmin.firstName,
-            lastName: newAdmin.lastName,
+            username: newAdmin.username,
             mobileNumber: newAdmin.mobileNumber,
-            city: newAdmin.city,
             role: newAdmin.role,
             isConfirmed: newAdmin.isConfirmed
         }
@@ -1339,9 +1332,10 @@ export const createAdminByOwner = asyncHandelr(async (req, res, next) => {
 
 
 
+
 export const updateAdminByOwner = asyncHandelr(async (req, res, next) => {
     const { adminId } = req.params;
-    const { firstName, lastName, email, mobileNumber, city } = req.body;
+    const { username, mobileNumber,  } = req.body;
 
     // ✅ التحقق من أن المستخدم هو Owner
     const owner = await Usermodel.findById(req.user._id);
@@ -1356,30 +1350,28 @@ export const updateAdminByOwner = asyncHandelr(async (req, res, next) => {
     }
 
     // ✅ التحقق من عدم تكرار البريد الإلكتروني
-    if (email && email !== admin.email) {
-        const existingUser = await Usermodel.findOne({ email });
+    if (username && username !== admin.username) {
+        const existingUser = await Usermodel.findOne({ username });
         if (existingUser) {
             return next(new Error("❌ البريد الإلكتروني مستخدم بالفعل!", { cause: 400 }));
         }
-        admin.email = email;
+        admin.username = username;
     }
 
     // ✅ تحديث البيانات المتبقية
-    if (firstName) admin.firstName = firstName;
-    if (lastName) admin.lastName = lastName;
+ 
     if (mobileNumber) admin.mobileNumber = mobileNumber;
-    if (city) admin.city = city;
 
+    if (username) admin.username = username;
     await admin.save();
 
     return successresponse(res, "✅ تم تعديل بيانات الـ Admin بنجاح!", 200, {
         admin: {
             id: admin._id,
-            firstName: admin.firstName,
-            lastName: admin.lastName,
-            email: admin.email,
+    
+            username: admin.username,
             mobileNumber: admin.mobileNumber,
-            city: admin.city
+      
         }
     });
 });
@@ -1432,16 +1424,16 @@ export const deleteAdminByOwner = asyncHandelr(async (req, res, next) => {
 });
 export const getAllAdmins = asyncHandelr(async (req, res, next) => {
     const admins = await Usermodel.find({ role: "Admin" })
-        .select("firstName lastName email mobileNumber city") // تحديد البيانات المهمة فقط
+        .select("  username mobileNumber ") // تحديد البيانات المهمة فقط
         .limit(10); // تحديد عدد النتائج في كل استعلام
 
     // تنسيق البيانات قبل الإرجاع
     const formattedAdmins = admins.map(admin => ({
         id: admin._id,
-        username: `${admin.firstName} ${admin.lastName}`,
-        email: admin.email,
+  
+        username: admin.username,
         mobileNumber: admin.mobileNumber,
-        city: admin.city
+
     }));
 
     return successresponse(res, "✅ قائمة المدراء", 200, { admins: formattedAdmins });

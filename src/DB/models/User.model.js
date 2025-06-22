@@ -8,7 +8,8 @@ export const providerTypes = { system: "system", google: "google" }
 const userSchema = new mongoose.Schema(
     {
 
-        email: { type: String, unique: true, required: true },
+        email: { type: String, sparse: true, },
+        username: { type: String, unique: true, required: true },
         password: { type: String },
         provider: { type: String, enum: Object.values(providerTypes),default:providerTypes.system },
         
@@ -101,14 +102,14 @@ const userSchema = new mongoose.Schema(
 );
 
 
-userSchema.virtual("username").set(function (value) {
-    console.log({value});
+// userSchema.virtual("username").set(function (value) {
+//     console.log({value});
     
-    this.firstName = value.split(" ")[0]
-    this.lastName = value.split(" ")[1]
-}).get(function () {
-    return this.firstName + " " + this.lastName
-})
+//     this.firstName = value.split(" ")[0]
+//     this.lastName = value.split(" ")[1]
+// }).get(function () {
+//     return this.firstName + " " + this.lastName
+// })
 
 const Usermodel = mongoose.model("User", userSchema);
 export default Usermodel;

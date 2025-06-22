@@ -45,19 +45,19 @@ async function sendOTP(phone) {
 
 
 export const signup = asyncHandelr(async (req, res, next) => {
-    const { lastName, firstName, email, password, mobileNumber, city } = req.body;
+    const { username,   password, mobileNumber,  } = req.body;
 
-    // ✅ التحقق من وجود المستخدم مسبقًا (البريد أو الهاتف)
+  
     const checkuser = await dbservice.findOne({
         model: Usermodel,
         filter: {
-            $or: [{ email }, { mobileNumber }]  // 🔥 تصحيح الخطأ
+            $or: [{ username }, { mobileNumber }]  
         }
     });
 
     if (checkuser) {
-        if (checkuser.email === email) {
-            return next(new Error("Email already exists", { cause: 400 }));
+        if (checkuser.username === username) {
+            return next(new Error("username already exists", { cause: 400 }));
         }
         if (checkuser.mobileNumber === mobileNumber) {
             return next(new Error("Phone number already exists", { cause: 400 }));
@@ -70,7 +70,7 @@ export const signup = asyncHandelr(async (req, res, next) => {
     // ✅ إنشاء المستخدم الجديد
     const user = await dbservice.create({
         model: Usermodel,
-        data: { lastName, firstName, password: hashpassword, email, mobileNumber, city }
+        data: {  username, password: hashpassword,  mobileNumber,  }
     });
 
     // ✅ إرسال OTP
