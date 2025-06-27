@@ -22,7 +22,7 @@ async function sendOTP(phone) {
             AUTHENTICA_OTP_URL,
             {
                 phone: phone,
-                method: "whatsapp",  
+                method: "whatsapp",
                 number_of_digits: 6,
                 otp_format: "numeric",
                 is_fallback_on: 0
@@ -41,6 +41,8 @@ async function sendOTP(phone) {
         console.error("❌ فشل في إرسال OTP:", error.response?.data || error.message);
     }
 }
+
+
 
 
 

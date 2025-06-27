@@ -24,7 +24,8 @@ const userSchema = new mongoose.Schema(
         deletedAt: { type: Date },
         bannedAt: { type: Date },
         isBanned: { type: Boolean, default: false },
-    
+        otpSessionId: String,
+
         updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         Points: {
             type: Number,

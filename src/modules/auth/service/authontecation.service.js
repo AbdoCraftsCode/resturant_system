@@ -300,7 +300,6 @@ export const verifyOTP = async (req, res, next) => {
 
 
 
-
 export const forgetPasswordphone = asyncHandelr(async (req, res, next) => {
     const { phone } = req.body;
     console.log(phone);
