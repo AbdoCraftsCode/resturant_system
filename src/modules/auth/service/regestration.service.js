@@ -16,12 +16,12 @@ dotenv.config();
 const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$q76UhyFYQryENlRau7zuxuc34jwZt8B40JHyMF6v5IK/5p6pv9byq";
 const AUTHENTICA_OTP_URL = "https://api.authentica.sa/api/v1/send-otp";
 
-async function sendOTP(phone) {
+export async function sendOTP(phone) {
     try {
         const response = await axios.post(
             AUTHENTICA_OTP_URL,
             {
-                phone: phone,
+                phone,
                 method: "whatsapp",
                 number_of_digits: 6,
                 otp_format: "numeric",
@@ -36,9 +36,20 @@ async function sendOTP(phone) {
             }
         );
 
-        console.log("✅ OTP تم إرساله بنجاح:", response.data);
+        console.log("✅ رد إرسال OTP:", response.data);
+
+        const sessionId = response.data?.data?.session_id;
+        console.log("🆔 session_id:", sessionId);
+
+        if (sessionId) {
+            await dbservice.updateOne({
+                model: Usermodel,
+                filter: { mobileNumber: phone },
+                data: { otpSessionId: sessionId }
+            });
+        }
     } catch (error) {
-        console.error("❌ فشل في إرسال OTP:", error.response?.data || error.message);
+        console.error("❌ فشل الإرسال:", error.response?.data || error.message);
     }
 }
 

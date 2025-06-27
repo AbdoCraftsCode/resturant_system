@@ -229,7 +229,6 @@ export const verifyOTP = async (req, res, next) => {
     }
 
     try {
-        // 🔍 البحث عن المستخدم برقم الهاتف
         const user = await dbservice.findOne({
             model: Usermodel,
             filter: { mobileNumber: phone }
@@ -239,10 +238,12 @@ export const verifyOTP = async (req, res, next) => {
             return next(new Error("❌ رقم الهاتف غير مسجل", { cause: 404 }));
         }
 
-        // 🔥 التحقق من OTP عبر API خارجي
+        const sessionId = user.otpSessionId;
+        console.log("📨 جاري التحقق من OTP بالبيانات:", { phone, otp, session_id: sessionId });
+
         const response = await axios.post(
             AUTHENTICA_VERIFY_URL,
-            { phone, otp },
+            { phone, otp, session_id: sessionId }, // ✅ هنا أرسل session_id
             {
                 headers: {
                     "X-Authorization": AUTHENTICA_API_KEY,
@@ -252,27 +253,17 @@ export const verifyOTP = async (req, res, next) => {
             }
         );
 
-        console.log("📩 استجابة API:", response.data);
+        console.log("📩 استجابة API من AUTHENTICA:", response.data);
 
         if (response.data.status === true && response.data.message === "OTP verified successfully") {
-            // ✅ تحديث حالة الحساب ليصبح "مفعل"
             await dbservice.updateOne({
                 model: Usermodel,
                 filter: { mobileNumber: phone },
                 data: { isConfirmed: true }
             });
 
-            // ✅ **إنشاء التوكن كما في `login`**
-            const access_Token = generatetoken({
-                payload: { id: user._id },
-                // signature: user.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
-            });
-
-            const refreshToken = generatetoken({
-                payload: { id: user._id },
-                // signature: user.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
-                expiresIn: "365d"
-            });
+            const access_Token = generatetoken({ payload: { id: user._id } });
+            const refreshToken = generatetoken({ payload: { id: user._id }, expiresIn: "365d" });
 
             return res.json({
                 success: true,
@@ -297,7 +288,6 @@ export const verifyOTP = async (req, res, next) => {
         });
     }
 };
-
 
 
 export const forgetPasswordphone = asyncHandelr(async (req, res, next) => {
