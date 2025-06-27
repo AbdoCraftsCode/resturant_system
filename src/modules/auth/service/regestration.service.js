@@ -21,8 +21,8 @@ export async function sendOTP(phone) {
         const response = await axios.post(
             AUTHENTICA_OTP_URL,
             {
-                phone,
-                method: "whatsapp",
+                phone: phone,
+                method: "whatsapp",  // or "sms"
                 number_of_digits: 6,
                 otp_format: "numeric",
                 is_fallback_on: 0
@@ -37,22 +37,12 @@ export async function sendOTP(phone) {
         );
 
         console.log("✅ رد إرسال OTP:", response.data);
-
-        const sessionId = response.data?.data?.session_id;
-        console.log("🆔 session_id:", sessionId);
-
-        if (sessionId) {
-            await dbservice.updateOne({
-                model: Usermodel,
-                filter: { mobileNumber: phone },
-                data: { otpSessionId: sessionId }
-            });
-        }
+        console.log("📩 رد كامل من Authentica:", JSON.stringify(response.data, null, 2));
+        console.log("🆔 session_id:", response.data?.data?.session_id);
     } catch (error) {
-        console.error("❌ فشل الإرسال:", error.response?.data || error.message);
+        console.error("❌ فشل في إرسال OTP:", error.response?.data || error.message);
     }
 }
-
 
 
 

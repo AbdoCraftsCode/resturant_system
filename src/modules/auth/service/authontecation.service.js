@@ -238,12 +238,15 @@ export const verifyOTP = async (req, res, next) => {
             return next(new Error("❌ رقم الهاتف غير مسجل", { cause: 404 }));
         }
 
-        const sessionId = user.otpSessionId;
-        console.log("📨 جاري التحقق من OTP بالبيانات:", { phone, otp, session_id: sessionId });
+        console.log("📨 جاري التحقق من OTP بالبيانات:", { phone, otp, session_id: undefined });
 
         const response = await axios.post(
             AUTHENTICA_VERIFY_URL,
-            { phone, otp, session_id: sessionId }, // ✅ هنا أرسل session_id
+            {
+                phone,
+                otp,
+                session_id: undefined  // مؤقتًا نرسله undefined حتى نعرف من الرد هل هو مطلوب
+            },
             {
                 headers: {
                     "X-Authorization": AUTHENTICA_API_KEY,
@@ -253,7 +256,7 @@ export const verifyOTP = async (req, res, next) => {
             }
         );
 
-        console.log("📩 استجابة API من AUTHENTICA:", response.data);
+        console.log("📩 استجابة API من AUTHENTICA:", JSON.stringify(response.data, null, 2));
 
         if (response.data.status === true && response.data.message === "OTP verified successfully") {
             await dbservice.updateOne({
