@@ -218,7 +218,7 @@ export const resendOTP = asyncHandelr(async (req, res, next) => {
 
 // $2y$10$ZHEfQKrayDl6V3JwOwnyreovYvhG.zTMW6mIedMEOjjoTr2R367Zy
 
-const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$q76UhyFYQryENlRau7zuxuc34jwZt8B40JHyMF6v5IK/5p6pv9byq";
+const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$ZHtIfchtuqASIn1YiPG5w.X6UFuzsOegpt6APriTklUBoZteB.dJe";
 const AUTHENTICA_VERIFY_URL = "https://api.authentica.sa/api/v1/verify-otp";
 
 export const verifyOTP = async (req, res, next) => {

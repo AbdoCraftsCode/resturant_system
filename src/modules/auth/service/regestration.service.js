@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
-const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$q76UhyFYQryENlRau7zuxuc34jwZt8B40JHyMF6v5IK/5p6pv9byq";
+const AUTHENTICA_API_KEY = process.env.AUTHENTICA_API_KEY || "$2y$10$ZHtIfchtuqASIn1YiPG5w.X6UFuzsOegpt6APriTklUBoZteB.dJe";
 const AUTHENTICA_OTP_URL = "https://api.authentica.sa/api/v1/send-otp";
 
 export async function sendOTP(phone) {
@@ -179,3 +179,4 @@ export const signupwithGmail = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, "Login successful", 200, { access_Token, refreshToken });
 });
+
