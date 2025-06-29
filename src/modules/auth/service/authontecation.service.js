@@ -538,6 +538,32 @@ export const loginwithGmail = asyncHandelr(async (req, res, next) => {
 });
  
 
+export const deleteMyAccount = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const user = await Usermodel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "❌ لم يتم العثور على الحساب." });
+        }
+
+        // تنفيذ الحذف
+        await Usermodel.findByIdAndDelete(userId);
+
+        res.status(200).json({
+            message: "✅ تم حذف حسابك بنجاح.",
+            deletedUserId: userId,
+        });
+    } catch (err) {
+        console.error("❌ Error in deleteMyAccount:", err);
+        res.status(500).json({
+            message: "❌ حدث خطأ أثناء حذف الحساب.",
+            error: err.message,
+        });
+    }
+};
+  
+
 
 
 
