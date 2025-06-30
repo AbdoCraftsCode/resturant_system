@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authentication, authorization } from "../../middlewere/authontcation.middlewere.js";
 import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 import { endpoint } from "./production.authrize.js";
-import { cancelOrder, reorderHatap ,createAdminByOwner, updateMixPriceAndQuantity,createBranch, createImages, createMix, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllMostawdaas, getAllOrders, getMostawdaasWithProducts, getorder, getProducts, getProductsByMostawdaa, getProductswithout, reorderProduct, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct, reorderProductInWarehouse, getAllProductsWithMostawdaNames, createHatap, gethatap, deleteHatap, updateHatap, getAdminNotifications, markAllAdminNotificationsAsRead } from "./service/production.service.js";
+import { cancelOrder, reorderHatap ,createAdminByOwner, updateMixPriceAndQuantity,createBranch, createImages, createMix, createOrder, createProduct, deleteAdminByOwner, deleteBranch, deleteImage, deleteProduct, deleteProductImage, getAllAdmins, getAllBranches, getAllImages, getAllMostawdaas, getAllOrders, getMostawdaasWithProducts, getorder, getProducts, getProductsByMostawdaa, getProductswithout, reorderProduct, searchUsersByName,  updateAdminByOwner, updateOrder, updateProduct, reorderProductInWarehouse, getAllProductsWithMostawdaNames, createHatap, gethatap, deleteHatap, updateHatap, getAdminNotifications, markAllAdminNotificationsAsRead, createCustomContent, getAllCustomContent } from "./service/production.service.js";
 
 const router = Router()
 
@@ -16,6 +16,13 @@ router.post("/createProduct",
     ]),
     createProduct
 );
+
+router.post(
+    "/createCustomContent",
+    uploadCloudFile(fileValidationTypes.image).single("image"),
+    createCustomContent
+);
+  
 
 router.post("/createHatap",
     authentication(),
@@ -63,7 +70,7 @@ router.get("/getorder", authentication(),getorder)
 router.post("/getProductswithout", getProductswithout)
 router.get("/getAllBranches/admin", getAllBranches)
 router.get("/getAdminNotifications", getAdminNotifications)
-
+router.get("/getAllCustomContent", getAllCustomContent)
 router.get("/getAllAdmins/admin", getAllAdmins)
 router.post("/getProductsByMostawdaa/:mostawdaaId", getProductsByMostawdaa)
 router.post("/getAllOrders", getAllOrders)

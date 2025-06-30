@@ -15,8 +15,9 @@ import cloud from "../../../utlis/multer/cloudinary.js";
 import { asyncHandelr } from "../../../utlis/response/error.response.js";
 import { successresponse } from "../../../utlis/response/success.response.js";
 import bcrypt from "bcrypt"
+import { CustomContentModel } from "../../../DB/models/customContentSchema.model.js";
 
-
+import fs from "fs";
 // const serviceAccount = {
 //     type: "service_account",
 //     project_id: "merba3-f8802",
@@ -277,8 +278,58 @@ export const createHatap = asyncHandelr(async (req, res, next) => {
 });
 
 
+export const createCustomContent = asyncHandelr(async (req, res, next) => {
+    const { title, topic, content, time } = req.body;
 
+    if (!title || !time) {
+        return next(new Error("❌ العنوان والوقت مطلوبان", { cause: 400 }));
+    }
 
+    let uploadedImage = null;
+
+    if (req.file) {
+        const result = await cloud.uploader.upload(req.file.path, {
+            folder: `customContent/general`, // ما فيش ارتباط بمستخدم معين
+        });
+
+        uploadedImage = {
+            secure_url: result.secure_url,
+            public_id: result.public_id
+        };
+
+        fs.unlinkSync(req.file.path);
+    }
+
+    const data = await CustomContentModel.create({
+        title,
+        topic,
+        content,
+        time,
+        image: uploadedImage,
+    });
+
+    return res.status(201).json({
+        message: "✅ تم إنشاء المحتوى بنجاح",
+        content: data
+    });
+});
+
+export const getAllCustomContent = async (req, res) => {
+    try {
+        const contents = await CustomContentModel.find().sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "✅ تم جلب المحتويات بنجاح",
+            contents
+        });
+    } catch (error) {
+        console.error("❌ خطأ في جلب المحتويات:", error);
+        return res.status(500).json({
+            message: "❌ فشل في جلب المحتويات",
+            error: error.message
+        });
+    }
+};
 
 
 
