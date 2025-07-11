@@ -10,6 +10,7 @@ import { generatetoken } from "../../../utlis/security/Token.security.js";
 
 import axios from "axios";
 import dotenv from "dotenv";
+import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
 dotenv.config();
 
 
@@ -180,3 +181,59 @@ export const signupwithGmail = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "Login successful", 200, { access_Token, refreshToken });
 });
 
+export const registerRestaurant = asyncHandelr(async (req, res, next) => {
+    const { fullName, email, phone, country, subdomain, password } = req.body;
+
+    // ✅ تحقق من تكرار subdomain و email
+    const checkuser = await dbservice.findOne({
+        model: RestaurantModel,
+        filter: {
+            $or: [{ subdomain }, { email }]
+        }
+    });
+
+    if (checkuser) {
+        if (checkuser.subdomain === subdomain) {
+            return next(new Error("subdomain already exists", { cause: 400 }));
+        }
+        if (checkuser.email === email) {
+            return next(new Error("email already exists", { cause: 400 }));
+        }
+    }
+
+    // ✅ تشفير كلمة المرور
+    const hashpassword = await generatehash({ planText: password });
+
+    // ✅ إنشاء المستخدم الجديد
+    const user = await dbservice.create({
+        model: RestaurantModel,
+        data: {
+            fullName,
+            password: hashpassword,
+            email,
+            phone,
+            country,
+            subdomain
+        }
+    });
+
+    // ✅ بناء الرابط الديناميكي تلقائيًا
+    const restaurantLink = `https://morezk12.github.io/Restaurant-system/#/restaurant/${user.subdomain}`;
+
+    // ✅ دمج كل البيانات داخل كائن واحد لأن دالتك بتتعامل مع message فقط
+    const allData = {
+        message: "User created successfully",
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        country: user.country,
+        subdomain: user.subdomain,
+        restaurantLink
+    };
+
+    // ✅ رجع كل البيانات داخل message عشان دالتك
+    return successresponse(res, allData, 201);
+});
+  
+  

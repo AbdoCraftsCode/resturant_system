@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import {  sendotpphone, signup, signupwithGmail } from "./service/regestration.service.js";
-import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
+import { registerRestaurant, sendotpphone, signup, signupwithGmail } from "./service/regestration.service.js";
+import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
 const routr = Router()
@@ -20,9 +20,12 @@ dotenv.config();
 
 
 routr.post("/signup", signup)
+routr.post("/registerRestaurant", registerRestaurant)
 routr.post("/verifyOTP", verifyOTP)
 
 routr.post("/login", login)
+
+routr.post("/loginRestaurant", loginRestaurant)
 routr.post("/resendOTP",resendOTP )
 routr.post("/resetpassword", resetpassword)
 routr.patch("/resetPasswordphone", resetPasswordphone)

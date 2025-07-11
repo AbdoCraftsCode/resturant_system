@@ -11,6 +11,7 @@ import OtpModel from "../../../DB/models/otp.model.js";
 import { nanoid, customAlphabet } from "nanoid";
 import { vervicaionemailtemplet } from "../../../utlis/temblete/vervication.email.js";
 import { sendemail } from "../../../utlis/email/sendemail.js";
+import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
 const AUTHENTICA_OTP_URL = "https://api.authentica.sa/api/v1/send-otp";
 export const login = asyncHandelr(async (req, res, next) => {
     const { identifier, password } = req.body; // identifier يمكن أن يكون إيميل أو رقم هاتف
@@ -564,6 +565,52 @@ export const deleteMyAccount = async (req, res) => {
 };
   
 
+export const loginRestaurant = asyncHandelr(async (req, res, next) => {
+    const { email, password } = req.body;
+    console.log(email, password);
+
+    // ✅ لازم ترجع كلمة المرور عشان تقدر تقارنها
+    const checkUser = await RestaurantModel.findOne({ email }).select('+password');
+
+    if (!checkUser) {
+        return next(new Error("User not found", { cause: 404 }));
+    }
+
+    // ✅ قارن كلمة المرور المشفرة
+    const isMatch = await comparehash({ planText: password, valuehash: checkUser.password });
+
+    if (!isMatch) {
+        return next(new Error("Password is incorrect", { cause: 404 }));
+    }
+
+    // ✅ توليد Access Token و Refresh Token
+    const access_Token = generatetoken({
+        payload: { id: checkUser._id }
+    });
+
+    const refreshToken = generatetoken({
+        payload: { id: checkUser._id },
+        expiresIn: "365d"
+    });
+
+    const restaurantLink = `https://morezk12.github.io/Restaurant-system/#/restaurant/${checkUser.subdomain}`;
+
+    // ✅ رجع كل بيانات المستخدم + التوكنات
+    const allData = {
+        message: "Login successful",
+        id: checkUser._id,
+        fullName: checkUser.fullName,
+        email: checkUser.email,
+        phone: checkUser.phone,
+        country: checkUser.country,
+        subdomain: checkUser.subdomain,
+        restaurantLink,
+        access_Token,
+        refreshToken
+    };
+
+    return successresponse(res, allData, 200);
+});
 
 
 
