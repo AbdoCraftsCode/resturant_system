@@ -182,7 +182,7 @@ export const signupwithGmail = asyncHandelr(async (req, res, next) => {
 });
 
 export const registerRestaurant = asyncHandelr(async (req, res, next) => {
-    const { fullName, email, phone, country, subdomain, password } = req.body;
+    const { fullName, email, phone,  subdomain, password } = req.body;
 
     // ✅ تحقق من تكرار subdomain و email
     const checkuser = await dbservice.findOne({
@@ -212,7 +212,7 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
             password: hashpassword,
             email,
             phone,
-            country,
+          
             subdomain
         }
     });
