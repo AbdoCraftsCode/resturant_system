@@ -267,4 +267,31 @@ export const createBranch = asyncHandelr(async (req, res, next) => {
     }, 201);
 });
 
+export const getBranches = asyncHandelr(async (req, res, next) => {
+    const userId = req.user.id; // لو عامل حماية بالتوكن
+
+    // 📌 تحديد الصفحة الحالية وعدد العناصر في كل صفحة
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    // 📌 إجمالي عدد الفروع الخاصة بالمطعم
+    const totalBranches = await BranchModel.countDocuments({ restaurant: userId });
+
+    // 📌 جلب الفروع مع الباجينيشن
+    const branches = await BranchModel.find({ restaurant: userId })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // ترتيب من الأحدث للأقدم (اختياري)
+
+    return successresponse(res, {
+        message: "Branches fetched successfully",
+        page,
+        totalPages: Math.ceil(totalBranches / limit),
+        totalBranches,
+        count: branches.length,
+        branches
+    });
+});
+
   
