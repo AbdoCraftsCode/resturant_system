@@ -576,6 +576,9 @@ export const loginRestaurant = asyncHandelr(async (req, res, next) => {
         return next(new Error("User not found", { cause: 404 }));
     }
 
+    if (!checkUser.isConfirmed) {
+        return next(new Error("Please confirm your email tmm ", { cause: 404 }));
+    }
     // ✅ قارن كلمة المرور المشفرة
     const isMatch = await comparehash({ planText: password, valuehash: checkUser.password });
 

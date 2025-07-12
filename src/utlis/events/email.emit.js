@@ -18,9 +18,8 @@ Emailevent.on("confirmemail", async (data) => {
 
     const emailOTP = generatehash({ planText: `${otp}` });
 
-    const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000); 
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
- 
 
 
     await Usermodel.updateOne(
@@ -28,11 +27,11 @@ Emailevent.on("confirmemail", async (data) => {
         {
             emailOTP,
             otpExpiresAt,
-            attemptCount: 0, 
+            attemptCount: 0,
         }
     );
 
-   
+
     await sendemail({ to: email, subject: "Confirm Email", html });
 
     console.log("Email sent successfully!");

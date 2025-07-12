@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { createBranch, deleteBranch, getBranches, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch } from "./service/regestration.service.js";
+import { confirmOTP, createBranch, deleteBranch, getBranches, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -32,6 +32,7 @@ routr.patch("/resetPasswordphone", resetPasswordphone)
 routr.post("/signupwithGmail", signupwithGmail)
 // routr.post("/confirmOTP", confirmOTP)
 routr.post("/sendotpphone", sendotpphone)
+routr.post("/confirmOTP", confirmOTP)
 routr.post("/getBranches", authentication(), getBranches)
 routr.delete("/deleteBranch/:id", authentication(), deleteBranch)
 routr.put("/updateBranch/:id", authentication(), updateBranch)

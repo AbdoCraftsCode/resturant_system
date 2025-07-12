@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
 
         // mobileNumber: { type: String }, 
         // role: { type: String, enum: Object.values(roletypes),  default: roletypes.User },
-        // isConfirmed: { type: Boolean, default: false },
+        isConfirmed: { type: Boolean, default: false },
         // deletedAt: { type: Date },
         // bannedAt: { type: Date },
         // isBanned: { type: Boolean, default: false },

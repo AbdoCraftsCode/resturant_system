@@ -12,6 +12,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
 import { BranchModel } from "../../../DB/models/BranchopaSchema.model.js";
+import { Emailevent } from "../../../utlis/events/email.emit.js";
 dotenv.config();
 
 
@@ -232,7 +233,7 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
         subdomain: user.subdomain,
         restaurantLink
     };
-
+    Emailevent.emit("confirmemail", { email });
     // ✅ رجع كل البيانات داخل message عشان دالتك
     return successresponse(res, allData, 201);
 });
@@ -340,6 +341,74 @@ export const updateBranch = asyncHandelr(async (req, res, next) => {
         branch
     });
 });
+
+
+export const confirmOTP = asyncHandelr(
+    async (req, res, next) => {
+        const { code, email } = req.body;
+
+
+        const user = await dbservice.findOne({ model: Usermodel, filter: { email } })
+        if (!user) {
+            return next(new Error("Email does not exist tmm", { cause: 404 }));
+        }
+
+
+        if (user.blockUntil && Date.now() < new Date(user.blockUntil).getTime()) {
+            const remainingTime = Math.ceil((new Date(user.blockUntil).getTime() - Date.now()) / 1000);
+            return next(new Error(`Too many attempts. Please try again after ${remainingTime} seconds.`, { cause: 429 }));
+        }
+
+
+        if (user.isConfirmed) {
+            return next(new Error("Email is already confirmed", { cause: 400 }));
+        }
+
+
+        if (Date.now() > new Date(user.otpExpiresAt).getTime()) {
+            return next(new Error("OTP has expired", { cause: 400 }));
+        }
+
+
+        const isValidOTP = comparehash({ planText: `${code}`, valuehash: user.emailOTP });
+        if (!isValidOTP) {
+
+            await dbservice.updateOne({ model: Usermodel, data: { $inc: { attemptCount: 1 } } })
+
+
+            if (user.attemptCount + 1 >= 5) {
+                const blockUntil = new Date(Date.now() + 2 * 60 * 1000);
+                await Usermodel.updateOne({ email }, { blockUntil, attemptCount: 0 });
+                return next(new Error("Too many attempts. You are temporarily blocked for 2 minutes.", { cause: 429 }));
+            }
+
+            return next(new Error("Invalid OTP. Please try again.", { cause: 400 }));
+        }
+
+
+        await Usermodel.updateOne(
+            { email },
+            {
+
+                isConfirmed: true,
+                $unset: { emailOTP: 0, otpExpiresAt: 0, attemptCount: 0, blockUntil: 0 },
+            }
+        );
+        const access_Token = generatetoken({
+            payload: { id: user._id },
+            // signature: user.role === roletypes.Admin ? process.env.SYSTEM_ACCESS_TOKEN : process.env.USER_ACCESS_TOKEN,
+        });
+
+        const refreshToken = generatetoken({
+            payload: { id: user._id },
+            // signature: user.role === roletypes.Admin ? process.env.SYSTEM_REFRESH_TOKEN : process.env.USER_REFRESH_TOKEN,
+            expiresIn: "365d"
+        });
+
+        return successresponse(res, "Email confirmed successfully", 200, { access_Token, refreshToken });
+    }
+);
+
 
 
   
