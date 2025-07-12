@@ -13,6 +13,8 @@ import dotenv from "dotenv";
 import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
 import { BranchModel } from "../../../DB/models/BranchopaSchema.model.js";
 import { Emailevent } from "../../../utlis/events/email.emit.js";
+import { MainGroupModel } from "../../../DB/models/mainGroupSchema.model.js";
+import { SubGroupModel } from "../../../DB/models/subGroupSchema.model.js";
 dotenv.config();
 
 
@@ -411,4 +413,94 @@ export const confirmOTP = asyncHandelr(
 
 
 
-  
+export const createMainGroup = asyncHandelr(async (req, res) => {
+    const { name, status } = req.body;
+    const userId = req.user.id;
+
+    const group = await MainGroupModel.create({
+        name,
+        status,
+        createdBy: userId
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء المجموعة الرئيسية بنجاح",
+        group
+    });
+});
+
+export const createSubGroup = asyncHandelr(async (req, res) => {
+    const { name, mainGroupId } = req.body;
+    const userId = req.user.id;
+
+    // تحقق أن المجموعة الرئيسية موجودة ومملوكة لنفس المستخدم
+    const mainGroup = await MainGroupModel.findOne({
+        _id: mainGroupId,
+        createdBy: userId
+    });
+
+    if (!mainGroup) {
+        res.status(404);
+        throw new Error("❌ لا يمكنك إنشاء مجموعة فرعية بدون صلاحية على المجموعة الرئيسية");
+    }
+
+    const subGroup = await SubGroupModel.create({
+        name,
+        mainGroup: mainGroupId,
+        createdBy: userId
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء المجموعة الفرعية بنجاح",
+        subGroup
+    });
+});
+
+export const getMainGroupsForUser = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+
+    const mainGroups = await MainGroupModel.find({ createdBy: userId })
+        .select("name status createdAt");
+
+    res.status(200).json({
+        message: "✅ تم جلب المجموعات الرئيسية",
+        count: mainGroups.length,
+        mainGroups
+    });
+});
+
+export const getMainGroupsWithSubGroups = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+
+    // جلب كل المجموعات الرئيسية الخاصة بالمستخدم
+    const mainGroups = await MainGroupModel.find({ createdBy: userId })
+        .select("name status createdAt")
+        .lean();
+
+    // جلب كل المجموعات الفرعية الخاصة بالمستخدم
+    const allSubGroups = await SubGroupModel.find({ createdBy: userId })
+        .select("name mainGroup")
+        .lean();
+
+    // ربط المجموعات الفرعية مع كل مجموعة رئيسية
+    const result = mainGroups.map(mainGroup => {
+        const subGroups = allSubGroups.filter(
+            sub => sub.mainGroup.toString() === mainGroup._id.toString()
+        );
+
+        return {
+            _id: mainGroup._id,
+            name: mainGroup.name,
+            status: mainGroup.status,
+            subGroups,
+            subGroupCount: subGroups.length
+        };
+    });
+
+    res.status(200).json({
+        message: "✅ تم جلب المجموعات الرئيسية مع المجموعات الفرعية",
+        count: result.length,
+        totalSubGroups: allSubGroups.length,
+        data: result
+    });
+});
