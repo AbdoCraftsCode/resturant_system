@@ -293,5 +293,53 @@ export const getBranches = asyncHandelr(async (req, res, next) => {
         branches
     });
 });
+export const deleteBranch = asyncHandelr(async (req, res, next) => {
+    const branchId = req.params.id;
+    const userId = req.user.id;
+
+    const branch = await BranchModel.findOneAndDelete({
+        _id: branchId,
+        restaurant: userId // تأكيد أن الفرع يخص نفس المستخدم
+    });
+
+    if (!branch) {
+        return next(new Error("❌ الفرع غير موجود أو لا تملك صلاحية حذفه", { cause: 404 }));
+    }
+
+    return successresponse(res, {
+        message: "✅ تم حذف الفرع بنجاح",
+        branch
+    });
+});
+export const updateBranch = asyncHandelr(async (req, res, next) => {
+    const branchId = req.params.id;
+    const userId = req.user.id;
+
+    const updateData = {
+        branchCode: req.body.branchCode,
+        branchName: req.body.branchName,
+        country: req.body.country,
+        city: req.body.city,
+        phone: req.body.phone,
+        address: req.body.address,
+        manager: req.body.manager
+    };
+
+    const branch = await BranchModel.findOneAndUpdate(
+        { _id: branchId, restaurant: userId },
+        updateData,
+        { new: true, runValidators: true }
+    );
+
+    if (!branch) {
+        return next(new Error("❌ الفرع غير موجود أو لا تملك صلاحية تعديله", { cause: 404 }));
+    }
+
+    return successresponse(res, {
+        message: "✅ تم تعديل بيانات الفرع بنجاح",
+        branch
+    });
+});
+
 
   
