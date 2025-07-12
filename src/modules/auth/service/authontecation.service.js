@@ -4,7 +4,7 @@ import { asyncHandelr } from "../../../utlis/response/error.response.js";
 import { comparehash, generatehash } from "../../../utlis/security/hash.security.js";
 import { successresponse } from "../../../utlis/response/success.response.js";
 import {  decodedToken,  generatetoken,  tokenTypes } from "../../../utlis/security/Token.security.js";
-// import { Emailevent } from "../../../utlis/events/email.emit.js";
+import { Emailevent } from "../../../utlis/events/email.emit.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import OtpModel from "../../../DB/models/otp.model.js";
@@ -611,7 +611,6 @@ export const loginRestaurant = asyncHandelr(async (req, res, next) => {
 
     return successresponse(res, allData, 200);
 });
-
 
 
 

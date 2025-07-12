@@ -69,32 +69,28 @@ Emailevent.on("confirmemail", async (data) => {
 Emailevent.on("forgetpassword", async (data) => {
     const { email } = data;
 
-    const otp = customAlphabet("0123456789", 6)(); // إنشاء كود OTP عشوائي
+    const otp = customAlphabet("0123456789", 6)();
 
-    const html = `
-        <h1>🔐 Reset Your Password</h1>
-        <p>Dear User,</p>
-        <p>You have requested to reset your password. Please use the following OTP to proceed:</p>
-        <h2 style="color: #ff6600;">${otp}</h2>
-        <p>This OTP is valid for <strong>2 minutes</strong>. If you did not request a password reset, please ignore this email.</p>
-        <p>Best regards,<br>Support Team</p>
-    `;
+
+    const html = vervicaionemailtemplet({ code: otp });
 
     const forgetpasswordOTP = generatehash({ planText: `${otp}` });
-    const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000); 
+
+
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await Usermodel.updateOne(
         { email },
         {
             forgetpasswordOTP,
             otpExpiresAt,
-            attemptCount: 0, 
+            attemptCount: 0,
         }
     );
 
-    await sendemail({ to: email, subject: "Password Reset Request", html });
+    await sendemail({ to: email, subject: "forgetpassword", html });
 
-    console.log(`Password reset email sent successfully to ${email}`);
+    console.log("Email sent successfully!");
 });
 
 

@@ -2,14 +2,13 @@ import nodemailer from "nodemailer"
 
 
 
-
 export const sendemail = async ({
     to = [],
     subject = "",
     text = "",
     html = "",
     attachments = [],
-   
+
 
 } = {}) => {
 
@@ -22,13 +21,18 @@ export const sendemail = async ({
             user: process.env.EMAIL,
             pass: process.env.EMAIL_PASSWORD,
         },
+
+
+        tls: {
+            rejectUnauthorized: false // 💥 ده بيسمح باستخدام شهادات SSL موقعة ذاتيًا
+        }
+
     });
 
 
 
     const info = await transporter.sendMail({
-        from: `"merba3 👻" <${process.env.EMAIL}>`,
-        replyTo: "daana652@gmail.com",
+        from: `"yallabina 👻" <${process.env.EMAIL}>`,
         to,
         subject,
         text,
@@ -39,6 +43,7 @@ export const sendemail = async ({
 
 
 }
+
 
 
 

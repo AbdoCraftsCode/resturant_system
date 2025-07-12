@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             default: null
-        }
+        },
 
 
         // email: { type: String, sparse: true, },
@@ -98,13 +98,13 @@ const userSchema = new mongoose.Schema(
 
 
 
-        // emailOTP: String,
-        // forgetpasswordOTP: String,
-        // attemptCount: Number,
-        // otpExpiresAt: Date,
-        // blockUntil: {
-        //     type: Date,
-        // },
+        emailOTP: String,
+        forgetpasswordOTP: String,
+        attemptCount: Number,
+        otpExpiresAt: Date,
+        blockUntil: {
+            type: Date,
+        },
 
      
     },
