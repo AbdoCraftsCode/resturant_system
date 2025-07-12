@@ -38,8 +38,8 @@ const BranchSchema = new mongoose.Schema({
     },
     manager: {
         type: String,
-        required: true,
-        trim: true
+        // required: true,
+        // trim: true
     }
 }, { timestamps: true });
 
