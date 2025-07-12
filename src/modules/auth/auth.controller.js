@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createBranch, createMainGroup, createSubGroup, deleteBranch, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch } from "./service/regestration.service.js";
+import { confirmOTP, createBranch, createMainGroup, createSubGroup, deleteBranch, deleteMainGroup, deleteSubGroup, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updateSubGroup } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -48,5 +48,9 @@ routr.post("/forgetpasswordphone", forgetPasswordphone)
 routr.post("/forgetPasswordphoneadmin", forgetPasswordphoneadmin)
 routr.post("/loginwithGmail", loginwithGmail)
 routr.delete("/deleteMyAccount", authentication(), deleteMyAccount)
+routr.delete("/deleteMainGroup/:id", authentication(), deleteMainGroup)
+routr.delete("/deleteSubGroup/:id", authentication(), deleteSubGroup)
+routr.patch("/updateMainGroup/:id", authentication(), updateMainGroup)
+routr.patch("/updateSubGroup/:id", authentication(), updateSubGroup)
 
 export default routr

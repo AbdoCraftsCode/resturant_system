@@ -504,3 +504,102 @@ export const getMainGroupsWithSubGroups = asyncHandelr(async (req, res) => {
         data: result
     });
 });
+
+export const deleteMainGroup = asyncHandelr(async (req, res) => {
+    const mainGroupId = req.params.id;
+    const userId = req.user.id;
+
+    const mainGroup = await MainGroupModel.findOneAndDelete({
+        _id: mainGroupId,
+        createdBy: userId
+    });
+
+    if (!mainGroup) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على المجموعة أو لا تملك صلاحية الحذف");
+    }
+
+    // حذف جميع المجموعات الفرعية المرتبطة
+    await SubGroupModel.deleteMany({ mainGroup: mainGroupId });
+
+    res.status(200).json({
+        message: "✅ تم حذف المجموعة الرئيسية وجميع المجموعات الفرعية التابعة لها"
+    });
+});
+
+
+export const deleteSubGroup = asyncHandelr(async (req, res) => {
+    const subGroupId = req.params.id;
+    const userId = req.user.id;
+
+    const subGroup = await SubGroupModel.findOneAndDelete({
+        _id: subGroupId,
+        createdBy: userId
+    });
+
+    if (!subGroup) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على المجموعة الفرعية أو لا تملك صلاحية الحذف");
+    }
+
+    res.status(200).json({
+        message: "✅ تم حذف المجموعة الفرعية بنجاح"
+    });
+});
+
+
+export const updateMainGroup = asyncHandelr(async (req, res) => {
+    const mainGroupId = req.params.id;
+    const userId = req.user.id;
+    const { name, status } = req.body;
+
+    const updated = await MainGroupModel.findOneAndUpdate(
+        { _id: mainGroupId, createdBy: userId },
+        { name, status },
+        { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+        res.status(404);
+        throw new Error("❌ لا تملك صلاحية التعديل أو المجموعة غير موجودة");
+    }
+
+    res.status(200).json({
+        message: "✅ تم تعديل المجموعة الرئيسية بنجاح",
+        updated
+    });
+});
+
+export const updateSubGroup = asyncHandelr(async (req, res) => {
+    const subGroupId = req.params.id;
+    const userId = req.user.id;
+    const { name, mainGroupId } = req.body;
+
+    // تأكد أن المستخدم يملك المجموعة الرئيسية الجديدة (إن تم تعديلها)
+    if (mainGroupId) {
+        const mainGroup = await MainGroupModel.findOne({
+            _id: mainGroupId,
+            createdBy: userId
+        });
+        if (!mainGroup) {
+            res.status(403);
+            throw new Error("❌ لا تملك صلاحية ربط بهذه المجموعة الرئيسية");
+        }
+    }
+
+    const updated = await SubGroupModel.findOneAndUpdate(
+        { _id: subGroupId, createdBy: userId },
+        { name, mainGroup: mainGroupId },
+        { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+        res.status(404);
+        throw new Error("❌ لا تملك صلاحية التعديل أو المجموعة غير موجودة");
+    }
+
+    res.status(200).json({
+        message: "✅ تم تعديل المجموعة الفرعية بنجاح",
+        updated
+    });
+});
