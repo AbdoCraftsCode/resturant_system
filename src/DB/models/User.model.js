@@ -7,91 +7,104 @@ export const providerTypes = { system: "system", google: "google" }
 
 const userSchema = new mongoose.Schema(
     {
+      fullName: { type: String, required: true, trim: true },
+        email: { type: String, required: true, unique: true, trim: true },
+        phone: { type: String, required: true, trim: true },
+  
+        subdomain: { type: String, required: true, unique: true, trim: true },
+        domain: { type: String, },
+        password: { type: String, },
+        updatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        }
 
-        email: { type: String, sparse: true, },
-        username: { type: String, unique: true, required: true },
-        password: { type: String },
-        provider: { type: String, enum: Object.values(providerTypes),default:providerTypes.system },
+
+        // email: { type: String, sparse: true, },
+        // username: { type: String, unique: true, required: true },
+        // password: { type: String },
+        // provider: { type: String, enum: Object.values(providerTypes),default:providerTypes.system },
         
-        isDeleted: { type:Boolean, default:false},
-        firstName: { type: String },
-        lastName: { type: String },
-        city:{ type: String },
+        // isDeleted: { type:Boolean, default:false},
+        // firstName: { type: String },
+        // lastName: { type: String },
+        // city:{ type: String },
 
-        mobileNumber: { type: String }, 
-        role: { type: String, enum: Object.values(roletypes),  default: roletypes.User },
-        isConfirmed: { type: Boolean, default: false },
-        deletedAt: { type: Date },
-        bannedAt: { type: Date },
-        isBanned: { type: Boolean, default: false },
-        otpSessionId: String,
+        // mobileNumber: { type: String }, 
+        // role: { type: String, enum: Object.values(roletypes),  default: roletypes.User },
+        // isConfirmed: { type: Boolean, default: false },
+        // deletedAt: { type: Date },
+        // bannedAt: { type: Date },
+        // isBanned: { type: Boolean, default: false },
+        // otpSessionId: String,
 
-        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        Points: {
-            type: Number,
-            default: 0,
-        },
+        // updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        // Points: {
+        //     type: Number,
+        //     default: 0,
+        // },
 
-        notifications: [
-            {
+        // notifications: [
+        //     {
 
 
-                orderPaid: [
-                    {
-                        amount: { type: Number },
-                        date: { type: Date, default: Date.now }
-                    }
-                ],
-                remainingAmount: [
-                    {
-                        amount: { type: Number },
-                        date: { type: Date, default: Date.now }
-                    }
-                ],
+        //         orderPaid: [
+        //             {
+        //                 amount: { type: Number },
+        //                 date: { type: Date, default: Date.now }
+        //             }
+        //         ],
+        //         remainingAmount: [
+        //             {
+        //                 amount: { type: Number },
+        //                 date: { type: Date, default: Date.now }
+        //             }
+        //         ],
 
-                orderDate: {
-                    type: String,
-                },
+        //         orderDate: {
+        //             type: String,
+        //         },
                
-                orderDetails: {
-                    en: { type: String, },
-                    ar: { type: String, },
-                },
-                orderStatus: {
-                    en: { type: String, required: true },
-                    ar: { type: String, required: true },
-                },
+        //         orderDetails: {
+        //             en: { type: String, },
+        //             ar: { type: String, },
+        //         },
+        //         orderStatus: {
+        //             en: { type: String, required: true },
+        //             ar: { type: String, required: true },
+        //         },
 
-                // orderPaid: {
-                //     type: Number,
-                // },
-                ordervalue: {
-                    type: Number,
-                },
-                // remainingAmount: {
-                //     type: Number,
-                // },
-                orderNumber: {
-                    type: Number,
-                },
-                image: {
-                    secure_url: { type: String,  }, // الصورة مطلوبة
-                    public_id: { type: String, }   // مهم لحذف الصور من Cloudinary
-                },
-            }
-        ],
+        //         // orderPaid: {
+        //         //     type: Number,
+        //         // },
+        //         ordervalue: {
+        //             type: Number,
+        //         },
+        //         // remainingAmount: {
+        //         //     type: Number,
+        //         // },
+        //         orderNumber: {
+        //             type: Number,
+        //         },
+        //         image: {
+        //             secure_url: { type: String,  }, // الصورة مطلوبة
+        //             public_id: { type: String, }   // مهم لحذف الصور من Cloudinary
+        //         },
+        //     }
+        // ],
         
-        fcmToken: { type: String, default: null },
+        // fcmToken: { type: String, default: null },
 
 
 
-        emailOTP: String,
-        forgetpasswordOTP: String,
-        attemptCount: Number,
-        otpExpiresAt: Date,
-        blockUntil: {
-            type: Date,
-        },
+        // emailOTP: String,
+        // forgetpasswordOTP: String,
+        // attemptCount: Number,
+        // otpExpiresAt: Date,
+        // blockUntil: {
+        //     type: Date,
+        // },
 
      
     },

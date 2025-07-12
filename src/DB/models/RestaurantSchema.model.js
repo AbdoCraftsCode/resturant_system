@@ -5,7 +5,7 @@ const RestaurantSchema = new mongoose.Schema(
         fullName: { type: String, required: true, trim: true },
         email: { type: String, required: true, unique: true, trim: true },
         phone: { type: String, required: true, trim: true },
-        // country: { type: String, required: true, trim: true },
+  
         subdomain: { type: String, required: true, unique: true, trim: true },
         domain: { type: String, },
         password: { type: String, },

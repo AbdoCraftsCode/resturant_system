@@ -570,7 +570,7 @@ export const loginRestaurant = asyncHandelr(async (req, res, next) => {
     console.log(email, password);
 
     // ✅ لازم ترجع كلمة المرور عشان تقدر تقارنها
-    const checkUser = await RestaurantModel.findOne({ email }).select('+password');
+    const checkUser = await Usermodel.findOne({ email }).select('+password');
 
     if (!checkUser) {
         return next(new Error("User not found", { cause: 404 }));

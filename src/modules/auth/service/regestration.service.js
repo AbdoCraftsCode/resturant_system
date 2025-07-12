@@ -11,6 +11,7 @@ import { generatetoken } from "../../../utlis/security/Token.security.js";
 import axios from "axios";
 import dotenv from "dotenv";
 import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
+import { BranchModel } from "../../../DB/models/BranchopaSchema.model.js";
 dotenv.config();
 
 
@@ -186,7 +187,7 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
 
     // ✅ تحقق من تكرار subdomain و email
     const checkuser = await dbservice.findOne({
-        model: RestaurantModel,
+        model: Usermodel,
         filter: {
             $or: [{ subdomain }, { email }]
         }
@@ -206,7 +207,7 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
 
     // ✅ إنشاء المستخدم الجديد
     const user = await dbservice.create({
-        model: RestaurantModel,
+        model: Usermodel,
         data: {
             fullName,
             password: hashpassword,
@@ -227,7 +228,7 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        country: user.country,
+        // country: user.country,
         subdomain: user.subdomain,
         restaurantLink
     };
@@ -236,4 +237,34 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
     return successresponse(res, allData, 201);
 });
   
+export const createBranch = asyncHandelr(async (req, res, next) => {
+    const {
+        branchCode,
+        branchName,
+        country,
+        city,
+        phone,
+        address,
+        manager
+    } = req.body;
+
+    const userId = req.user.id; // لو عندك حماية بالتوكن
+
+    const branch = await BranchModel.create({
+        restaurant: userId,
+        branchCode,
+        branchName,
+        country,
+        city,
+        phone,
+        address,
+        manager
+    });
+
+    return successresponse(res, {
+        message: 'Branch created successfully',
+        branch
+    }, 201);
+});
+
   
