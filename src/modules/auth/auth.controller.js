@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createBranch, createMainGroup, createSubGroup, deleteBranch, deleteMainGroup, deleteSubGroup, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updateSubGroup } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -11,6 +11,7 @@ const routr = Router()
 
 import axios from "axios";
 import dotenv from "dotenv";
+import { fileValidationTypes, uploadCloudFile } from "../../utlis/multer/cloud.multer.js";
 
 dotenv.config();
 
@@ -49,8 +50,21 @@ routr.post("/forgetPasswordphoneadmin", forgetPasswordphoneadmin)
 routr.post("/loginwithGmail", loginwithGmail)
 routr.delete("/deleteMyAccount", authentication(), deleteMyAccount)
 routr.delete("/deleteMainGroup/:id", authentication(), deleteMainGroup)
+routr.delete("/deletePermission/:id", authentication(), deletePermission)
+routr.patch("/updatePermission/:id", authentication(), updatePermission)
 routr.delete("/deleteSubGroup/:id", authentication(), deleteSubGroup)
 routr.patch("/updateMainGroup/:id", authentication(), updateMainGroup)
 routr.patch("/updateSubGroup/:id", authentication(), updateSubGroup)
+routr.post("/createPermissions", authentication(), createPermissions)
+routr.get("/getAllPermissions", authentication(), getAllPermissions)
+// routr.post("/createAdminUser", authentication(), createAdminUser)
 
+routr.post("/createAdminUser",
+    authentication(),
+    uploadCloudFile(fileValidationTypes.image).fields([
+        { name: "image", maxCount: 1 } // ✅ صورة واحدة فقط
+    ]),
+    createAdminUser
+);
+routr.get("/getAllAdminUsers", authentication(), getAllAdminUsers)
 export default routr

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const BranchSchema = new mongoose.Schema({
     restaurant: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Restaurant',
+        ref: 'User',
         required: true
     },
     branchCode: {

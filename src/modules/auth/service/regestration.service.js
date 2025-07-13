@@ -6,7 +6,7 @@ import { comparehash, encryptData, generatehash } from "../../../utlis/security/
 import { successresponse } from "../../../utlis/response/success.response.js";
 import { OAuth2Client } from "google-auth-library";
 import { generatetoken } from "../../../utlis/security/Token.security.js";
-
+import cloud from "../../../utlis/multer/cloudinary.js";
 
 import axios from "axios";
 import dotenv from "dotenv";
@@ -15,6 +15,8 @@ import { BranchModel } from "../../../DB/models/BranchopaSchema.model.js";
 import { Emailevent } from "../../../utlis/events/email.emit.js";
 import { MainGroupModel } from "../../../DB/models/mainGroupSchema.model.js";
 import { SubGroupModel } from "../../../DB/models/subGroupSchema.model.js";
+import { PermissionModel } from "../../../DB/models/permissionSchema.model.js";
+import { AdminUserModel } from "../../../DB/models/adminUserSchema.model.js";
 dotenv.config();
 
 
@@ -601,5 +603,221 @@ export const updateSubGroup = asyncHandelr(async (req, res) => {
     res.status(200).json({
         message: "✅ تم تعديل المجموعة الفرعية بنجاح",
         updated
+    });
+});
+
+export const createPermissions = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+    const { name, description } = req.body;
+
+    if (!name) {
+        res.status(400);
+        throw new Error("❌ يجب إدخال اسم الصلاحية");
+    }
+
+    const existing = await PermissionModel.findOne({ name: name.toLowerCase().trim() });
+
+    if (existing) {
+        res.status(400);
+        throw new Error("❌ هذه الصلاحية موجودة بالفعل");
+    }
+
+    const created = await PermissionModel.create({
+        name: name.toLowerCase().trim(),
+        description,
+        createdBy: userId
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء الصلاحية",
+        permission: created
+    });
+});
+export const getAllPermissions = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+
+    const permissions = await PermissionModel.find({ createdBy: userId });
+
+    res.status(200).json({
+        message: "✅ الصلاحيات الخاصة بك",
+        count: permissions.length,
+        permissions
+    });
+});
+
+// controllers/permission.controller.js
+
+export const deletePermission = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const permission = await PermissionModel.findOneAndDelete({
+        _id: id,
+        createdBy: userId
+    });
+
+    if (!permission) {
+        res.status(404);
+        throw new Error("❌ الصلاحية غير موجودة أو ليس لديك صلاحية لحذفها");
+    }
+
+    res.status(200).json({
+        message: "✅ تم حذف الصلاحية بنجاح",
+        deletedId: permission._id
+    });
+});
+
+export const updatePermission = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    const updated = await PermissionModel.findOneAndUpdate(
+        { _id: id, createdBy: userId },
+        {
+            ...(name && { name: name.toLowerCase().trim() }),
+            ...(description && { description })
+        },
+        { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+        res.status(404);
+        throw new Error("❌ الصلاحية غير موجودة أو ليس لديك صلاحية لتعديلها");
+    }
+
+    res.status(200).json({
+        message: "✅ تم تعديل الصلاحية بنجاح",
+        permission: updated
+    });
+});
+
+// export const createAdminUser = asyncHandelr(async (req, res) => {
+//     const createdBy = req.user.id; // صاحب المطعم من التوكن
+
+//     const {
+//         name,
+//         phone,
+//         password,
+//         branch,
+//         mainGroup,
+//         subGroup,
+//         permissions
+//     } = req.body;
+
+//     if (!name || !phone || !password || !branch || !mainGroup || !subGroup || !permissions) {
+//         res.status(400);
+//         throw new Error("❌ كل الحقول مطلوبة");
+//     }
+
+//     // تحقق إن الهاتف مش مكرر
+//     const exists = await AdminUserModel.findOne({ phone });
+//     if (exists) {
+//         res.status(400);
+//         throw new Error("❌ هذا الرقم مستخدم بالفعل");
+//     }
+
+//     const admin = await AdminUserModel.create({
+//         name,
+//         phone,
+//         password,
+//         branch,
+//         mainGroup,
+//         subGroup,
+//         permissions,
+//         createdBy
+//     });
+
+//     res.status(201).json({
+//         message: "✅ تم إنشاء الأدمن بنجاح",
+//         admin: {
+//             _id: admin._id,
+//             name: admin.name,
+//             phone: admin.phone,
+//             branch: admin.branch,
+//             mainGroup: admin.mainGroup,
+//             subGroup: admin.subGroup,
+//             permissions: admin.permissions
+//         }
+//     });
+// });
+
+
+
+
+export const createAdminUser = asyncHandelr(async (req, res) => {
+    const createdBy = req.user.id;
+    const {
+        name, phone, password, branch,
+        mainGroup, subGroup, permissions
+    } = req.body;
+
+    if (!name || !phone || !password || !branch || !mainGroup || !subGroup || !permissions) {
+        res.status(400);
+        throw new Error("❌ جميع الحقول مطلوبة");
+    }
+
+    const exists = await AdminUserModel.findOne({ phone });
+    if (exists) {
+        res.status(400);
+        throw new Error("❌ هذا الرقم مستخدم بالفعل");
+    }
+
+    // ✅ رفع الصورة من req.files.image[0]
+    let uploadedImage = null;
+    const imageFile = req.files?.image?.[0];
+    if (imageFile) {
+        const uploaded = await cloud.uploader.upload(imageFile.path, {
+            folder: `adminUsers/${createdBy}`
+        });
+        uploadedImage = {
+            secure_url: uploaded.secure_url,
+            public_id: uploaded.public_id
+        };
+    }
+
+    const admin = await AdminUserModel.create({
+        name,
+        phone,
+        password,
+        branch,
+        mainGroup,
+        subGroup,
+        permissions,
+        profileImage: uploadedImage,
+        createdBy
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء الأدمن بنجاح",
+        admin: {
+            _id: admin._id,
+            name: admin.name,
+            phone: admin.phone,
+            branch: admin.branch,
+            profileImage: admin.profileImage,
+            permissions: admin.permissions
+        }
+    });
+});
+
+
+
+
+
+
+export const getAllAdminUsers = asyncHandelr(async (req, res) => {
+    const createdBy = req.user.id;
+
+    const admins = await AdminUserModel.find({ createdBy })
+        .populate("branch", "branchName")        // فك اسم الفرع
+        .populate("mainGroup", "name")           // فك اسم المجموعة الرئيسية
+        .populate("subGroup", "name")            // فك اسم المجموعة الفرعية
+        .populate("permissions", "name description"); // فك الصلاحيات
+
+    res.status(200).json({
+        message: "✅ الأدمنات التابعين لك",
+        count: admins.length,
+        admins
     });
 });
