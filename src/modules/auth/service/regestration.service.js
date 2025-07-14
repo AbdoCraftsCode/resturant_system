@@ -891,23 +891,21 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
 
     const {
         name, phone, email, password,
-        branch = [], mainGroup = [], subGroup = [], permissions = []
+        branch, mainGroup, subGroup, permissions
     } = req.body;
 
-    // الحصول على البيانات القديمة
     const oldAdmin = await AdminUserModel.findOne({ _id: adminId, createdBy: userId });
     if (!oldAdmin) {
         res.status(404);
         throw new Error("❌ لم يتم العثور على الأدمن أو ليس لديك صلاحية التعديل");
     }
 
-    // دمج القديم مع الجديد بدون تكرار
-    const mergeUnique = (oldArray, newArray) => {
-        const set = new Set([
-            ...oldArray.map(item => item.toString()),
-            ...newArray.map(item => item.toString())
-        ]);
-        return Array.from(set);
+    // دمج الأريهات
+    const mergeArray = (oldArray = [], newArray = []) => {
+        if (!Array.isArray(newArray)) return oldArray;
+        const filtered = oldArray.filter(item => newArray.includes(item));
+        const added = newArray.filter(item => !filtered.includes(item));
+        return [...filtered, ...added];
     };
 
     const updatedData = {
@@ -915,14 +913,13 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
         phone: phone || oldAdmin.phone,
         email: email || oldAdmin.email,
         password: password || oldAdmin.password,
-
-        branch: mergeUnique(oldAdmin.branch, Array.isArray(branch) ? branch : [branch]),
-        mainGroup: mergeUnique(oldAdmin.mainGroup, Array.isArray(mainGroup) ? mainGroup : [mainGroup]),
-        subGroup: mergeUnique(oldAdmin.subGroup, Array.isArray(subGroup) ? subGroup : [subGroup]),
-        permissions: mergeUnique(oldAdmin.permissions, Array.isArray(permissions) ? permissions : [permissions])
+        branch: mergeArray(oldAdmin.branch, branch),
+        mainGroup: mergeArray(oldAdmin.mainGroup, mainGroup),
+        subGroup: mergeArray(oldAdmin.subGroup, subGroup),
+        permissions: mergeArray(oldAdmin.permissions, permissions)
     };
 
-    // رفع صورة جديدة لو فيه
+    // رفع صورة جديدة إن وجدت
     const imageFile = req.files?.image?.[0];
     if (imageFile) {
         const uploaded = await cloud.uploader.upload(imageFile.path, {
