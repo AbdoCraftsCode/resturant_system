@@ -20,11 +20,12 @@ const adminUserSchema = new mongoose.Schema({
         required: true
     },
 
-    branch: {
+    branch: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Branchhh",
         required: true
-    },
+    }],
+
 
     mainGroup: [{
         type: mongoose.Schema.Types.ObjectId,

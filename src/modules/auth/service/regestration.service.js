@@ -752,10 +752,17 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         mainGroup, subGroup, permissions
     } = req.body;
 
-    if (!name || !phone || !password || !branch || !Array.isArray(permissions) || !Array.isArray(mainGroup) || !Array.isArray(subGroup)) {
+    if (
+        !name || !phone || !password ||
+        !Array.isArray(branch) ||
+        !Array.isArray(mainGroup) ||
+        !Array.isArray(subGroup) ||
+        !Array.isArray(permissions)
+    ) {
         res.status(400);
-        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والصلاحيات في صورة Array");
+        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array");
     }
+
 
 
 
