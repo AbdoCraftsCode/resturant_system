@@ -33,11 +33,12 @@ const adminUserSchema = new mongoose.Schema({
     }],
 
 
-    subGroup: {
+    subGroup: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "SubGroup",
         required: true
-    },
+    }],
+
 
     permissions: [{
         type: mongoose.Schema.Types.ObjectId,
