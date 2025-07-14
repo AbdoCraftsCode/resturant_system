@@ -891,59 +891,57 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
 
     const {
         name, phone, email, password,
-        branch, mainGroup, subGroup, permissions
+        branch = [], mainGroup = [], subGroup = [], permissions = []
     } = req.body;
 
-    // التحقق من أن القيم المطلوبة موجودة
-    // if (
-    //     !name || !phone || !password || !email ||
-    //     !Array.isArray(branch) ||
-    //     !Array.isArray(mainGroup) ||
-    //     !Array.isArray(subGroup) ||
-    //     !Array.isArray(permissions)
-    // ) {
-    //     res.status(400);
-    //     throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array");
-    // }
+    // الحصول على البيانات القديمة
+    const oldAdmin = await AdminUserModel.findOne({ _id: adminId, createdBy: userId });
+    if (!oldAdmin) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على الأدمن أو ليس لديك صلاحية التعديل");
+    }
 
-    // رفع صورة جديدة إن وجدت
-    let uploadedImage = null;
+    // دمج القديم مع الجديد بدون تكرار
+    const mergeUnique = (oldArray, newArray) => {
+        const set = new Set([
+            ...oldArray.map(item => item.toString()),
+            ...newArray.map(item => item.toString())
+        ]);
+        return Array.from(set);
+    };
+
+    const updatedData = {
+        name: name || oldAdmin.name,
+        phone: phone || oldAdmin.phone,
+        email: email || oldAdmin.email,
+        password: password || oldAdmin.password,
+
+        branch: mergeUnique(oldAdmin.branch, Array.isArray(branch) ? branch : [branch]),
+        mainGroup: mergeUnique(oldAdmin.mainGroup, Array.isArray(mainGroup) ? mainGroup : [mainGroup]),
+        subGroup: mergeUnique(oldAdmin.subGroup, Array.isArray(subGroup) ? subGroup : [subGroup]),
+        permissions: mergeUnique(oldAdmin.permissions, Array.isArray(permissions) ? permissions : [permissions])
+    };
+
+    // رفع صورة جديدة لو فيه
     const imageFile = req.files?.image?.[0];
     if (imageFile) {
         const uploaded = await cloud.uploader.upload(imageFile.path, {
             folder: `adminUsers/${userId}`
         });
-        uploadedImage = {
+        updatedData.profileImage = {
             secure_url: uploaded.secure_url,
             public_id: uploaded.public_id
         };
     }
 
-    // تحديث البيانات
     const updatedAdmin = await AdminUserModel.findOneAndUpdate(
         { _id: adminId, createdBy: userId },
-        {
-            name,
-            phone,
-            email,
-            password,
-            branch,
-            mainGroup,
-            subGroup,
-            permissions,
-            ...(uploadedImage && { profileImage: uploadedImage })
-        },
+        updatedData,
         { new: true, runValidators: true }
     );
-
-    if (!updatedAdmin) {
-        res.status(404);
-        throw new Error("❌ لم يتم العثور على الأدمن أو ليس لديك صلاحية التعديل");
-    }
 
     res.status(200).json({
         message: "✅ تم تحديث بيانات الأدمن بنجاح",
         admin: updatedAdmin
     });
 });
-
