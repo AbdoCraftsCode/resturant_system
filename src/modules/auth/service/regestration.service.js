@@ -752,10 +752,11 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         mainGroup, subGroup, permissions
     } = req.body;
 
-    if (!name || !phone || !password || !branch || !mainGroup || !subGroup || !permissions) {
+    if (!name || !phone || !password || !branch || !Array.isArray(permissions) || !Array.isArray(mainGroup) || !subGroup) {
         res.status(400);
-        throw new Error("❌ جميع الحقول مطلوبة");
+        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والصلاحيات في صورة Array");
     }
+
 
     const exists = await AdminUserModel.findOne({ phone });
     if (exists) {

@@ -26,11 +26,12 @@ const adminUserSchema = new mongoose.Schema({
         required: true
     },
 
-    mainGroup: {
+    mainGroup: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "MainGroup",
         required: true
-    },
+    }],
+
 
     subGroup: {
         type: mongoose.Schema.Types.ObjectId,
