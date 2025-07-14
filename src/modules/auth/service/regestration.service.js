@@ -748,12 +748,13 @@ export const updatePermission = asyncHandelr(async (req, res) => {
 export const createAdminUser = asyncHandelr(async (req, res) => {
     const createdBy = req.user.id;
     const {
-        name, phone, password, branch,
+        name, phone, email,password, branch,
         mainGroup, subGroup, permissions
     } = req.body;
 
     if (
         !name || !phone || !password ||
+        !email ||
         !Array.isArray(branch) ||
         !Array.isArray(mainGroup) ||
         !Array.isArray(subGroup) ||
@@ -766,7 +767,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
 
 
 
-    const exists = await AdminUserModel.findOne({ phone });
+    const exists = await AdminUserModel.findOne({ email });
     if (exists) {
         res.status(400);
         throw new Error("❌ هذا الرقم مستخدم بالفعل");
@@ -788,6 +789,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
     const admin = await AdminUserModel.create({
         name,
         phone,
+        email,
         password,
         branch,
         mainGroup,
@@ -804,6 +806,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
             name: admin.name,
             phone: admin.phone,
             branch: admin.branch,
+            email: admin.email,
             profileImage: admin.profileImage,
             permissions: admin.permissions
         }
