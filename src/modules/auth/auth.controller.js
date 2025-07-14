@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -55,9 +55,9 @@ routr.patch("/updatePermission/:id", authentication(), updatePermission)
 routr.delete("/deleteSubGroup/:id", authentication(), deleteSubGroup)
 routr.patch("/updateMainGroup/:id", authentication(), updateMainGroup)
 routr.patch("/updateSubGroup/:id", authentication(), updateSubGroup)
-routr.post("/createPermissions", authentication(), createPermissions)
-routr.get("/getAllPermissions", authentication(), getAllPermissions)
-// routr.post("/createAdminUser", authentication(), createAdminUser)
+routr.post("/createPermissions",  createPermissions)
+routr.get("/getAllPermissions",  getAllPermissions)
+routr.get("/getSubGroupsByMainGroup/:mainGroupId", authentication(), getSubGroupsByMainGroup)
 
 routr.post("/createAdminUser",
     authentication(),

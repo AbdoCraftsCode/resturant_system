@@ -13,11 +13,11 @@ const permissionSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // أو "Admin"
-        required: true
-    }
+    // createdBy: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User", // أو "Admin"
+    //     required: true
+    // }
 }, { timestamps: true });
 
 export const PermissionModel = mongoose.model("Permission", permissionSchema);

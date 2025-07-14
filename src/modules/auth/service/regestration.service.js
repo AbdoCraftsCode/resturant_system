@@ -607,7 +607,7 @@ export const updateSubGroup = asyncHandelr(async (req, res) => {
 });
 
 export const createPermissions = asyncHandelr(async (req, res) => {
-    const userId = req.user.id;
+    // const userId = req.user.id;
     const { name, description } = req.body;
 
     if (!name) {
@@ -625,7 +625,7 @@ export const createPermissions = asyncHandelr(async (req, res) => {
     const created = await PermissionModel.create({
         name: name.toLowerCase().trim(),
         description,
-        createdBy: userId
+        // createdBy: userId
     });
 
     res.status(201).json({
@@ -634,9 +634,9 @@ export const createPermissions = asyncHandelr(async (req, res) => {
     });
 });
 export const getAllPermissions = asyncHandelr(async (req, res) => {
-    const userId = req.user.id;
+    // const userId = req.user.id;
 
-    const permissions = await PermissionModel.find({ createdBy: userId });
+    const permissions = await PermissionModel.find();
 
     res.status(200).json({
         message: "✅ الصلاحيات الخاصة بك",
@@ -819,5 +819,36 @@ export const getAllAdminUsers = asyncHandelr(async (req, res) => {
         message: "✅ الأدمنات التابعين لك",
         count: admins.length,
         admins
+    });
+});
+
+export const getSubGroupsByMainGroup = asyncHandelr(async (req, res, next) => {
+    const userId = req.user.id;
+    const { mainGroupId } = req.params;
+
+    if (!mainGroupId) {
+        return next(new Error("❌ يجب إرسال معرف المجموعة الرئيسية", { cause: 400 }));
+    }
+
+    // تأكد إن المجموعة الرئيسية فعلاً ملك المستخدم
+    const mainGroup = await MainGroupModel.findOne({ _id: mainGroupId, createdBy: userId });
+
+    if (!mainGroup) {
+        return next(new Error("❌ لا تملك صلاحية الوصول لهذه المجموعة الرئيسية أو غير موجودة", { cause: 404 }));
+    }
+
+    // جلب المجموعات الفرعية التابعة لها
+    const subGroups = await SubGroupModel.find({ mainGroup: mainGroupId, createdBy: userId })
+        .select("name createdAt")
+        .lean();
+
+    res.status(200).json({
+        message: "✅ تم جلب المجموعات الفرعية الخاصة بهذه المجموعة الرئيسية",
+        count: subGroups.length,
+        mainGroup: {
+            _id: mainGroup._id,
+            name: mainGroup.name
+        },
+        subGroups
     });
 });
