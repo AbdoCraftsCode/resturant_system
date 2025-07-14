@@ -864,3 +864,69 @@ export const getSubGroupsByMainGroup = asyncHandelr(async (req, res, next) => {
         subGroups
     });
 });
+
+
+export const deleteAdminUser = asyncHandelr(async (req, res) => {
+    const adminId = req.params.id;
+    const userId = req.user.id; // صاحب المطعم
+
+    const admin = await AdminUserModel.findOneAndDelete({
+        _id: adminId,
+        createdBy: userId
+    });
+
+    if (!admin) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على الأدمن أو ليس لديك صلاحية الحذف");
+    }
+
+    res.status(200).json({
+        message: "✅ تم حذف الأدمن بنجاح"
+    });
+});
+
+export const updateAdminUser = asyncHandelr(async (req, res) => {
+    const adminId = req.params.id;
+    const userId = req.user.id;
+
+    // تحويل الحقول القادمة كسلاسل إلى Arrays فعلية
+    const updateData = {
+        name: req.body.name,
+        phone: req.body.phone,
+        email: req.body.email,
+        password: req.body.password,
+        branch: req.body.branch ? JSON.parse(req.body.branch) : undefined,
+        mainGroup: req.body.mainGroup ? JSON.parse(req.body.mainGroup) : undefined,
+        subGroup: req.body.subGroup ? JSON.parse(req.body.subGroup) : undefined,
+        permissions: req.body.permissions ? JSON.parse(req.body.permissions) : undefined
+    };
+
+    // رفع صورة جديدة لو موجودة
+    const imageFile = req.files?.image?.[0];
+    if (imageFile) {
+        const uploaded = await cloud.uploader.upload(imageFile.path, {
+            folder: `adminUsers/${userId}`
+        });
+        updateData.profileImage = {
+            secure_url: uploaded.secure_url,
+            public_id: uploaded.public_id
+        };
+    }
+
+    const updatedAdmin = await AdminUserModel.findOneAndUpdate(
+        { _id: adminId, createdBy: userId },
+        updateData,
+        { new: true, runValidators: true }
+    );
+
+    if (!updatedAdmin) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على الأدمن أو ليس لديك صلاحية التعديل");
+    }
+
+    res.status(200).json({
+        message: "✅ تم تحديث بيانات الأدمن بنجاح",
+        admin: updatedAdmin
+    });
+});
+

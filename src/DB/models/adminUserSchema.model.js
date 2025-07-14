@@ -5,40 +5,40 @@ import mongoose from "mongoose";
 const adminUserSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        // required: true,
         trim: true
     },
     email: { type: String, required: true, unique: true, trim: true },
 
     phone: {
         type: String,
-        required: true,
+        // required: true,
         unique: true
     },
 
     password: {
         type: String,
-        required: true
+        // required: true
     },
 
     branch: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Branchhh",
-        required: true
+        // required: true
     }],
 
 
     mainGroup: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "MainGroup",
-        required: true
+        // required: true
     }],
 
 
     subGroup: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "SubGroup",
-        required: true
+        // required: true
     }],
 
 

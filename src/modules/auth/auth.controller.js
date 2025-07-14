@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -40,6 +40,8 @@ routr.get("/getMainGroupsForUser", authentication(), getMainGroupsForUser)
 routr.get("/getMainGroupsWithSubGroups", authentication(), getMainGroupsWithSubGroups)
 
 routr.delete("/deleteBranch/:id", authentication(), deleteBranch)
+routr.delete("/deleteAdminUser/:id", authentication(), deleteAdminUser)
+
 routr.put("/updateBranch/:id", authentication(), updateBranch)
 routr.post("/refreshToken", refreshToken)
 routr.post("/createMainGroup", authentication(), createMainGroup)
@@ -66,5 +68,16 @@ routr.post("/createAdminUser",
     ]),
     createAdminUser
 );
+
+
+routr.patch("/updateAdminUser/:id",
+    authentication(),
+    uploadCloudFile(fileValidationTypes.image).fields([
+        { name: "image", maxCount: 1 } // ✅ صورة واحدة فقط
+    ]),
+    updateAdminUser
+);
+
+
 routr.get("/getAllAdminUsers", authentication(), getAllAdminUsers)
 export default routr
