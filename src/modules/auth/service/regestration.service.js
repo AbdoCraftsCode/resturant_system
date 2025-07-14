@@ -889,33 +889,50 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
     const adminId = req.params.id;
     const userId = req.user.id;
 
-    // تحويل الحقول القادمة كسلاسل إلى Arrays فعلية
-    const updateData = {
-        name: req.body.name,
-        phone: req.body.phone,
-        email: req.body.email,
-        password: req.body.password,
-        branch: req.body.branch ? JSON.parse(req.body.branch) : undefined,
-        mainGroup: req.body.mainGroup ? JSON.parse(req.body.mainGroup) : undefined,
-        subGroup: req.body.subGroup ? JSON.parse(req.body.subGroup) : undefined,
-        permissions: req.body.permissions ? JSON.parse(req.body.permissions) : undefined
-    };
+    const {
+        name, phone, email, password,
+        branch, mainGroup, subGroup, permissions
+    } = req.body;
 
-    // رفع صورة جديدة لو موجودة
+    // التحقق من أن القيم المطلوبة موجودة
+    // if (
+    //     !name || !phone || !password || !email ||
+    //     !Array.isArray(branch) ||
+    //     !Array.isArray(mainGroup) ||
+    //     !Array.isArray(subGroup) ||
+    //     !Array.isArray(permissions)
+    // ) {
+    //     res.status(400);
+    //     throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array");
+    // }
+
+    // رفع صورة جديدة إن وجدت
+    let uploadedImage = null;
     const imageFile = req.files?.image?.[0];
     if (imageFile) {
         const uploaded = await cloud.uploader.upload(imageFile.path, {
             folder: `adminUsers/${userId}`
         });
-        updateData.profileImage = {
+        uploadedImage = {
             secure_url: uploaded.secure_url,
             public_id: uploaded.public_id
         };
     }
 
+    // تحديث البيانات
     const updatedAdmin = await AdminUserModel.findOneAndUpdate(
         { _id: adminId, createdBy: userId },
-        updateData,
+        {
+            name,
+            phone,
+            email,
+            password,
+            branch,
+            mainGroup,
+            subGroup,
+            permissions,
+            ...(uploadedImage && { profileImage: uploadedImage })
+        },
         { new: true, runValidators: true }
     );
 
