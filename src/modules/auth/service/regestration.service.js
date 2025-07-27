@@ -18,6 +18,7 @@ import { SubGroupModel } from "../../../DB/models/subGroupSchema.model.js";
 import { PermissionModel } from "../../../DB/models/permissionSchema.model.js";
 import { AdminUserModel } from "../../../DB/models/adminUserSchema.model.js";
 import { QuestionModel } from "../../../DB/models/question2Schema.model.js";
+import { EvaluationModel } from "../../../DB/models/evaluationStatusSchema.model.js";
 dotenv.config();
 
 
@@ -950,6 +951,7 @@ export const createQuestion = asyncHandelr(async (req, res) => {
     const {
         questionText,
         mainGroups,
+        evaluations,
         subGroups
     } = req.body;
 
@@ -957,6 +959,7 @@ export const createQuestion = asyncHandelr(async (req, res) => {
     if (
         !Array.isArray(questionText) || questionText.length === 0 ||
         !Array.isArray(mainGroups) || mainGroups.length === 0 ||
+        !Array.isArray(evaluations) || evaluations.length === 0 ||
         !Array.isArray(subGroups) || subGroups.length === 0
     ) {
         res.status(400);
@@ -967,6 +970,7 @@ export const createQuestion = asyncHandelr(async (req, res) => {
         questionText,
         mainGroups,
         subGroups,
+        evaluations,
         createdBy: userId
     });
 
@@ -1024,4 +1028,37 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
         data
     });
 });
+export const createEvaluation = asyncHandelr(async (req, res) => {
+    const { title, statuses } = req.body;
+    const createdBy = req.user._id;
 
+    if (!title || !Array.isArray(statuses) || statuses.length === 0) {
+        res.status(400);
+        throw new Error("❌ العنوان مطلوب ويجب إدخال حالة تقييم واحدة على الأقل");
+    }
+
+    const evaluation = await EvaluationModel.create({
+        title,
+        statuses,
+        createdBy
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء التقييم بنجاح",
+        evaluation
+    });
+});
+
+
+// ✅ GET: جلب جميع التقييمات الخاصة بالمستخدم
+export const getEvaluations = asyncHandelr(async (req, res) => {
+    const createdBy = req.user._id;
+
+    const evaluations = await EvaluationModel.find({ createdBy });
+
+    res.status(200).json({
+        message: "✅ تم جلب التقييمات",
+        count: evaluations.length,
+        data: evaluations
+    });
+});

@@ -22,6 +22,10 @@ const questionSchema = new mongoose.Schema({
         ref: "MainGroup",
         required: true
     }],
+    evaluations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Evaluation" // ربط بالتقييمات
+    }],
 
     subGroups: [{
         type: mongoose.Schema.Types.ObjectId,
