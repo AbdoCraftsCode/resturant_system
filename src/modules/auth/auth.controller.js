@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createMainGroup, createPermissions, createQuestion, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getMainGroupsForUser, getMainGroupsWithSubGroups, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -57,7 +57,10 @@ routr.patch("/updatePermission/:id", authentication(), updatePermission)
 routr.delete("/deleteSubGroup/:id", authentication(), deleteSubGroup)
 routr.patch("/updateMainGroup/:id", authentication(), updateMainGroup)
 routr.patch("/updateSubGroup/:id", authentication(), updateSubGroup)
-routr.post("/createPermissions",  createPermissions)
+routr.post("/createPermissions", createPermissions)
+
+routr.post("/createQuestion",authentication(), createQuestion)
+routr.get("/getQuestionsByMainGroups", authentication(), getQuestionsByMainGroups)
 routr.get("/getAllPermissions",  getAllPermissions)
 routr.get("/getSubGroupsByMainGroup/:mainGroupId", authentication(), getSubGroupsByMainGroup)
 

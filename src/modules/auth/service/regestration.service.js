@@ -17,6 +17,7 @@ import { MainGroupModel } from "../../../DB/models/mainGroupSchema.model.js";
 import { SubGroupModel } from "../../../DB/models/subGroupSchema.model.js";
 import { PermissionModel } from "../../../DB/models/permissionSchema.model.js";
 import { AdminUserModel } from "../../../DB/models/adminUserSchema.model.js";
+import { QuestionModel } from "../../../DB/models/question2Schema.model.js";
 dotenv.config();
 
 
@@ -942,3 +943,85 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
         admin: updatedAdmin
     });
 });
+
+
+export const createQuestion = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+    const {
+        questionText,
+        mainGroups,
+        subGroups
+    } = req.body;
+
+    // التحقق من صحة البيانات
+    if (
+        !Array.isArray(questionText) || questionText.length === 0 ||
+        !Array.isArray(mainGroups) || mainGroups.length === 0 ||
+        !Array.isArray(subGroups) || subGroups.length === 0
+    ) {
+        res.status(400);
+        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون مصفوفات");
+    }
+
+    const newQuestion = await QuestionModel.create({
+        questionText,
+        mainGroups,
+        subGroups,
+        createdBy: userId
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء السؤال بنجاح",
+        question: newQuestion
+    });
+});
+export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+
+    // جلب كل المجموعات الرئيسية الخاصة بالمستخدم
+    const mainGroups = await MainGroupModel.find({ createdBy: userId }).lean();
+
+    // جلب كل المجموعات الفرعية الخاصة بالمستخدم
+    const subGroups = await SubGroupModel.find({ createdBy: userId }).lean();
+
+    // جلب كل الأسئلة الخاصة بالمستخدم
+    const questions = await QuestionModel.find({ createdBy: userId }).lean();
+
+    const data = mainGroups.map(main => {
+        // جلب المجموعات الفرعية التابعة لها
+        const relatedSubGroups = subGroups
+            .filter(sub => sub.mainGroup.toString() === main._id.toString())
+            .map(sub => {
+                // جلب الأسئلة الخاصة بالمجموعة الفرعية دي
+                const relatedQuestions = questions.filter(q =>
+                    q.subGroups.some(subId => subId.toString() === sub._id.toString())
+                );
+
+                return {
+                    _id: sub._id,
+                    name: sub.name,
+                    questions: relatedQuestions
+                };
+            });
+
+        // فلترة فقط المجموعات الرئيسية التي لها على الأقل سؤال واحد في أي مجموعة فرعية
+        const totalQuestions = relatedSubGroups.reduce((acc, sub) => acc + sub.questions.length, 0);
+
+        if (totalQuestions > 0) {
+            return {
+                _id: main._id,
+                name: main.name,
+                subGroups: relatedSubGroups
+            };
+        }
+
+        return null; // لا ترجعها إن ما فيهاش أسئلة
+    }).filter(Boolean); // إزالة الـ null
+
+    res.status(200).json({
+        message: "✅ تم جلب المجموعات الرئيسية والفرعية مع الأسئلة",
+        count: data.length,
+        data
+    });
+});
+
