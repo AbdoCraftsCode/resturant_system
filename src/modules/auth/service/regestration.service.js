@@ -948,35 +948,41 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
 
 export const createQuestion = asyncHandelr(async (req, res) => {
     const userId = req.user.id;
-    const {
-        questionText,
-        mainGroups,
-        evaluations,
-        subGroups
-    } = req.body;
+    const { questions } = req.body;
 
-    // التحقق من صحة البيانات
-    if (
-        !Array.isArray(questionText) || questionText.length === 0 ||
-        !Array.isArray(mainGroups) || mainGroups.length === 0 ||
-        !Array.isArray(evaluations) || evaluations.length === 0 ||
-        !Array.isArray(subGroups) || subGroups.length === 0
-    ) {
+    if (!Array.isArray(questions) || questions.length === 0) {
         res.status(400);
-        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون مصفوفات");
+        throw new Error("❌ يجب إرسال مصفوفة من الأسئلة");
     }
 
-    const newQuestion = await QuestionModel.create({
-        questionText,
-        mainGroups,
-        subGroups,
-        evaluations,
-        createdBy: userId
-    });
+    // التحقق من كل سؤال داخل المصفوفة
+    for (const q of questions) {
+        if (
+            !q.questionText?.ar || !q.questionText?.en ||
+            !Array.isArray(q.mainGroups) || q.mainGroups.length === 0 ||
+            !Array.isArray(q.subGroups) || q.subGroups.length === 0 ||
+            !q.evaluation
+        ) {
+            res.status(400);
+            throw new Error("❌ كل سؤال يجب أن يحتوي على questionText و mainGroups و subGroups و evaluation");
+        }
+    }
+
+    // إنشاء كل سؤال
+    const createdQuestions = await QuestionModel.insertMany(
+        questions.map(q => ({
+            questionText: q.questionText,
+            mainGroups: q.mainGroups,
+            subGroups: q.subGroups,
+            evaluation: q.evaluation,
+            createdBy: userId
+        }))
+    );
 
     res.status(201).json({
-        message: "✅ تم إنشاء السؤال بنجاح",
-        question: newQuestion
+        message: "✅ تم إنشاء جميع الأسئلة بنجاح",
+        count: createdQuestions.length,
+        data: createdQuestions
     });
 });
 export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
@@ -988,8 +994,10 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
     // جلب كل المجموعات الفرعية الخاصة بالمستخدم
     const subGroups = await SubGroupModel.find({ createdBy: userId }).lean();
 
-    // جلب كل الأسئلة الخاصة بالمستخدم
-    const questions = await QuestionModel.find({ createdBy: userId }).lean();
+    // ✅ جلب الأسئلة ومعاها التقييم populate
+    const questions = await QuestionModel.find({ createdBy: userId })
+        .populate("evaluation") // ← هذا السطر فقط
+        .lean();
 
     const data = mainGroups.map(main => {
         // جلب المجموعات الفرعية التابعة لها
@@ -1028,6 +1036,7 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
         data
     });
 });
+
 export const createEvaluation = asyncHandelr(async (req, res) => {
     const { title, statuses } = req.body;
     const createdBy = req.user._id;

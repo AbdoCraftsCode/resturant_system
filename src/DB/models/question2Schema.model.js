@@ -2,29 +2,15 @@
 import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
-    questionText: [
-        {
-            ar: {
-                type: String,
-                required: true,
-                trim: true
-            },
-            en: {
-                type: String,
-                required: true,
-                trim: true
-            }
-        }
-    ],
+    questionText: {
+        ar: { type: String, required: true, trim: true },
+        en: { type: String, required: true, trim: true }
+    },
 
     mainGroups: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "MainGroup",
         required: true
-    }],
-    evaluations: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Evaluation" // ربط بالتقييمات
     }],
 
     subGroups: [{
@@ -33,12 +19,17 @@ const questionSchema = new mongoose.Schema({
         required: true
     }],
 
+    evaluation: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Evaluation",
+        required: true
+    },
+
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // أو "Owner"
+        ref: "User",
         required: true
     }
-
 }, { timestamps: true });
 
 export const QuestionModel = mongoose.model("Question", questionSchema);
