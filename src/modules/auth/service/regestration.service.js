@@ -1150,7 +1150,7 @@ export const updateSingleQuestion = asyncHandelr(async (req, res) => {
 export const createMode = async (req, res) => {
     try {
         const { managerName, subGroups, locationId } = req.body;
-
+        const userId = req.user?._id;
         if (!managerName || !locationId) {
             return res.status(400).json({ message: "البيانات ناقصة" });
         }
@@ -1158,6 +1158,7 @@ export const createMode = async (req, res) => {
         const newMode = new evaluateModel({
             managerName,
             subGroups,
+            createdBy: userId,
             locationId,
         });
 
@@ -1171,5 +1172,43 @@ export const createMode = async (req, res) => {
     } catch (error) {
         console.error("❌ خطأ في إنشاء المود:", error);
         res.status(500).json({ success: false, message: "حدث خطأ في السيرفر" });
+    }
+};
+
+
+export const getMyEvaluations = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const evaluations = await evaluateModel.find({ createdBy: userId })
+            .populate({
+                path: "locationId",
+                select: "branchName",
+                model: BranchModel
+            })
+            .populate({
+                path: "createdBy",
+                select: "fullName",
+                model: Usermodel
+            })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            message: "تم جلب كل التقييمات بنجاح",
+            count: evaluations.length,
+            data: evaluations.map(e => ({
+                managerName: e.managerName,
+                date: e.createdAt,
+                location: e.locationId?.branchName || "غير محدد",
+                createdBy: e.createdBy?.fullName || "غير معروف"
+            }))
+        });
+    } catch (error) {
+        console.error("❌ خطأ أثناء جلب التقييمات:", error);
+        res.status(500).json({
+            success: false,
+            message: "حدث خطأ في السيرفر"
+        });
     }
 };

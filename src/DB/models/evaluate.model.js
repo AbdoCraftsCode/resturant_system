@@ -20,6 +20,11 @@ const modeSchema = new mongoose.Schema({
         ref: "Location", // عدل الاسم حسب اسم موديل الموقع
         required: true,
     },
+      createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+     
+      },
 }, { timestamps: true });
 
 export default mongoose.model("mode", modeSchema);
