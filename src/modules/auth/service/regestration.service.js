@@ -609,6 +609,23 @@ export const updateSubGroup = asyncHandelr(async (req, res) => {
     });
 });
 
+
+export const getMySubGroups = asyncHandelr(async (req, res) => {
+    const userId = req.user.id;
+
+    const subGroups = await SubGroupModel.find({ createdBy: userId })
+        .populate("mainGroup", "name") // يمكنك تعديل الحقول التي تود جلبها من المجموعة الرئيسية
+        .sort({ createdAt: -1 }); // ترتيب تنازلي حسب تاريخ الإنشاء
+
+    res.status(200).json({
+        message: "✅ تم جلب المجموعات الفرعية الخاصة بك بنجاح",
+        count: subGroups.length,
+        subGroups,
+    });
+});
+
+
+
 export const createPermissions = asyncHandelr(async (req, res) => {
     // const userId = req.user.id;
     const { name, description } = req.body;
