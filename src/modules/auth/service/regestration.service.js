@@ -7,7 +7,7 @@ import { successresponse } from "../../../utlis/response/success.response.js";
 import { OAuth2Client } from "google-auth-library";
 import { generatetoken } from "../../../utlis/security/Token.security.js";
 import cloud from "../../../utlis/multer/cloudinary.js";
-
+import mongoose from "mongoose";
 import axios from "axios";
 import dotenv from "dotenv";
 import { RestaurantModel } from "../../../DB/models/RestaurantSchema.model.js";
@@ -945,46 +945,47 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
     });
 });
 
-
 export const createQuestion = asyncHandelr(async (req, res) => {
     const userId = req.user.id;
-    const { questions } = req.body;
+    const { questions, mainGroup, subGroup, isActive } = req.body;
+
+    if (!mainGroup || !subGroup) {
+        res.status(400);
+        throw new Error("❌ يجب تحديد المجموعة الرئيسية والفرعية");
+    }
 
     if (!Array.isArray(questions) || questions.length === 0) {
         res.status(400);
         throw new Error("❌ يجب إرسال مصفوفة من الأسئلة");
     }
 
-    // التحقق من كل سؤال داخل المصفوفة
-    for (const q of questions) {
-        if (
-            !q.questionText?.ar || !q.questionText?.en ||
-            !Array.isArray(q.mainGroups) || q.mainGroups.length === 0 ||
-            !Array.isArray(q.subGroups) || q.subGroups.length === 0 ||
-            !q.evaluation
-        ) {
-            res.status(400);
-            throw new Error("❌ كل سؤال يجب أن يحتوي على questionText و mainGroups و subGroups و evaluation");
+    const formattedQuestions = questions.map(q => {
+        if (!q.questionText?.ar || !q.questionText?.en || !q.evaluation) {
+            throw new Error("❌ كل سؤال يجب أن يحتوي على questionText و evaluation");
         }
-    }
 
-    // إنشاء كل سؤال
-    const createdQuestions = await QuestionModel.insertMany(
-        questions.map(q => ({
+        // ✅ الحل هنا باستخدام new
+        return {
             questionText: q.questionText,
-            mainGroups: q.mainGroups,
-            subGroups: q.subGroups,
-            evaluation: q.evaluation,
-            createdBy: userId
-        }))
-    );
+            evaluation: new mongoose.Types.ObjectId(q.evaluation)
+        };
+    });
+
+    const created = await QuestionModel.create({
+        questions: formattedQuestions,
+        mainGroup,
+        subGroup,
+        isActive: isActive ?? true,
+        createdBy: userId
+    });
 
     res.status(201).json({
-        message: "✅ تم إنشاء جميع الأسئلة بنجاح",
-        count: createdQuestions.length,
-        data: createdQuestions
+        message: "✅ تم إنشاء الأسئلة في مستند واحد بنجاح",
+        data: created
     });
 });
+
+
 export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
     const userId = req.user.id;
 
@@ -994,19 +995,19 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
     // جلب كل المجموعات الفرعية الخاصة بالمستخدم
     const subGroups = await SubGroupModel.find({ createdBy: userId }).lean();
 
-    // ✅ جلب الأسئلة ومعاها التقييم populate
+    // ✅ جلب الأسئلة ومعاها التقييم داخل كل سؤال في المصفوفة
     const questions = await QuestionModel.find({ createdBy: userId })
-        .populate("evaluation") // ← هذا السطر فقط
+        .populate("questions.evaluation") // ✅ تم التعديل هنا فقط
         .lean();
 
     const data = mainGroups.map(main => {
-        // جلب المجموعات الفرعية التابعة لها
+        // جلب المجموعات الفرعية التابعة للمجموعة الرئيسية الحالية
         const relatedSubGroups = subGroups
             .filter(sub => sub.mainGroup.toString() === main._id.toString())
             .map(sub => {
-                // جلب الأسئلة الخاصة بالمجموعة الفرعية دي
+                // جلب الأسئلة المرتبطة بهذه المجموعة الفرعية
                 const relatedQuestions = questions.filter(q =>
-                    q.subGroups.some(subId => subId.toString() === sub._id.toString())
+                    q.subGroup.toString() === sub._id.toString()
                 );
 
                 return {
@@ -1016,7 +1017,7 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
                 };
             });
 
-        // فلترة فقط المجموعات الرئيسية التي لها على الأقل سؤال واحد في أي مجموعة فرعية
+        // حساب عدد الأسئلة في كل المجموعات الفرعية
         const totalQuestions = relatedSubGroups.reduce((acc, sub) => acc + sub.questions.length, 0);
 
         if (totalQuestions > 0) {
@@ -1027,8 +1028,8 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
             };
         }
 
-        return null; // لا ترجعها إن ما فيهاش أسئلة
-    }).filter(Boolean); // إزالة الـ null
+        return null; // تجاهل المجموعات الرئيسية التي لا تحتوي على أي أسئلة
+    }).filter(Boolean); // إزالة القيم الفارغة
 
     res.status(200).json({
         message: "✅ تم جلب المجموعات الرئيسية والفرعية مع الأسئلة",
