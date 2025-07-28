@@ -19,6 +19,7 @@ import { PermissionModel } from "../../../DB/models/permissionSchema.model.js";
 import { AdminUserModel } from "../../../DB/models/adminUserSchema.model.js";
 import { QuestionModel } from "../../../DB/models/question2Schema.model.js";
 import { EvaluationModel } from "../../../DB/models/evaluationStatusSchema.model.js";
+import evaluateModel from "../../../DB/models/evaluate.model.js";
 dotenv.config();
 
 
@@ -1128,3 +1129,30 @@ export const updateSingleQuestion = asyncHandelr(async (req, res) => {
     });
 });
 
+
+export const createMode = async (req, res) => {
+    try {
+        const { managerName, subGroups, locationId } = req.body;
+
+        if (!managerName || !locationId) {
+            return res.status(400).json({ message: "البيانات ناقصة" });
+        }
+
+        const newMode = new evaluateModel({
+            managerName,
+            subGroups,
+            locationId,
+        });
+
+        await newMode.save();
+
+        res.status(201).json({
+            success: true,
+            message: "تم إنشاء المود بنجاح",
+            data: newMode,
+        });
+    } catch (error) {
+        console.error("❌ خطأ في إنشاء المود:", error);
+        res.status(500).json({ success: false, message: "حدث خطأ في السيرفر" });
+    }
+};
