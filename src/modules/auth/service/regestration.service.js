@@ -1072,3 +1072,59 @@ export const getEvaluations = asyncHandelr(async (req, res) => {
         data: evaluations
     });
 });
+
+
+export const deleteSingleQuestion = asyncHandelr(async (req, res) => {
+    const { mainId, questionId } = req.params;
+
+    const updated = await QuestionModel.findByIdAndUpdate(
+        mainId,
+        {
+            $pull: {
+                questions: { _id: questionId }
+            }
+        },
+        { new: true }
+    );
+
+    if (!updated) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على السؤال أو المستند");
+    }
+
+    res.status(200).json({
+        message: "✅ تم حذف السؤال بنجاح",
+        data: updated
+    });
+});
+
+
+export const updateSingleQuestion = asyncHandelr(async (req, res) => {
+    const { mainId, questionId } = req.params; // mainId هو ID المستند الرئيسي
+    const { questionText, evaluation } = req.body;
+
+    const question = await QuestionModel.findOneAndUpdate(
+        {
+            _id: mainId,
+            "questions._id": questionId
+        },
+        {
+            $set: {
+                "questions.$.questionText": questionText,
+                "questions.$.evaluation": new mongoose.Types.ObjectId(evaluation)
+            }
+        },
+        { new: true }
+    );
+
+    if (!question) {
+        res.status(404);
+        throw new Error("❌ لم يتم العثور على السؤال أو المستند");
+    }
+
+    res.status(200).json({
+        message: "✅ تم تحديث السؤال بنجاح",
+        data: question
+    });
+});
+
