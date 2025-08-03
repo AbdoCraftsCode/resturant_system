@@ -20,6 +20,7 @@ import { AdminUserModel } from "../../../DB/models/adminUserSchema.model.js";
 import { QuestionModel } from "../../../DB/models/question2Schema.model.js";
 import { EvaluationModel } from "../../../DB/models/evaluationStatusSchema.model.js";
 import evaluateModel from "../../../DB/models/evaluate.model.js";
+import EvaluationResult from "../../../DB/models/answerSchema.model.js";
 dotenv.config();
 
 
@@ -1281,3 +1282,94 @@ export const getModeSubGroupsWithQuestions = async (req, res) => {
     }
 };
 
+
+export const createEvaluationResult = async (req, res) => {
+    try {
+        const { modeId, answers } = req.body;
+        const userId = req.user?._id || "غير معروف"; // استخراج ID من التوكن
+
+        const updatedAnswers = answers.map(answer => ({
+            ...answer,
+            createdBy: userId,
+        }));
+
+        const newResult = await EvaluationResult.create({
+            modeId,
+            answers: updatedAnswers,
+            createdBy: userId, // لو كنت بتسجل مين أنشأ التقييم بالكامل
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "تم إنشاء نتيجة التقييم بنجاح",
+            data: newResult,
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "حدث خطأ أثناء إنشاء التقييم",
+            error: err.message,
+        });
+    }
+};
+
+
+
+export const getEvaluationResultsByMode = async (req, res) => {
+    try {
+        const { modeId } = req.params;
+
+        const results = await EvaluationResult.find({ modeId })
+            .populate("modeId", "title managerName")
+            .populate("answers.subGroupId", "name")
+            .populate("answers.createdBy", "fullName")
+            .lean();
+
+        // هات كل الـ questionIds اللي موجودة في النتائج
+        const allQuestionIds = results.flatMap(result =>
+            result.answers.map(ans => ans.questionId)
+        );
+
+        // هات كل الأسئلة (لو الأسئلة متخزنة في Document فيه array اسمها questions)
+        const allQuestionDocs = await QuestionModel.find({
+            "questions._id": { $in: allQuestionIds }
+        }).lean();
+
+        // حضّر خريطة بالأسئلة
+        const questionMap = {};
+        for (const doc of allQuestionDocs) {
+            for (const q of doc.questions) {
+                questionMap[q._id.toString()] = q.questionText;
+            }
+        }
+
+        const responseData = results.map(result => ({
+            _id: result._id,
+            modeTitle: result.modeId?.title,
+            managerName: result.modeId?.managerName,
+            createdAt: result.createdAt,
+            answers: result.answers.map(ans => ({
+                question: questionMap[ans.questionId?.toString()] || "❌ غير متوفر",
+                subGroup: ans.subGroupId?.name || "❌ غير معروف",
+                answer: ans.answer,
+                percentage: ans.percentage,
+                answeredBy: ans.createdBy?.fullName || "غير معروف"
+            }))
+        }));
+
+        res.status(200).json({
+            success: true,
+            message: "✅ تم جلب التقييمات بنجاح",
+            count: results.length,
+            data: responseData
+        });
+
+    } catch (err) {
+        console.error("❌ Error:", err);
+        res.status(500).json({
+            success: false,
+            message: "❌ حدث خطأ أثناء جلب التقييمات",
+            error: err.message
+        });
+    }
+};
