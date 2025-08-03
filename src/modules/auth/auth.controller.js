@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createEvaluation, createMainGroup, createMode, createPermissions, createQuestion, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getMyEvaluations, getMySubGroups, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createEvaluation, createMainGroup, createMode, createPermissions, createQuestion, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getModeSubGroupsWithQuestions, getMyEvaluations, getMySubGroups, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -60,6 +60,7 @@ routr.patch("/updateSubGroup/:id", authentication(), updateSubGroup)
 routr.post("/createEvaluation", authentication(), createEvaluation)
 
 routr.post("/createPermissions", createPermissions)
+routr.get("/getModeSubGroupsWithQuestions/:modeId", getModeSubGroupsWithQuestions)
 routr.post("/createMode",authentication(), createMode)
 routr.post("/createQuestion", authentication(), createQuestion)
 routr.post("/getMyEvaluations", authentication(), getMyEvaluations)

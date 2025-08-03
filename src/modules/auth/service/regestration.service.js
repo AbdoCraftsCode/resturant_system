@@ -1212,3 +1212,72 @@ export const getMyEvaluations = async (req, res) => {
         });
     }
 };
+
+export const getModeSubGroupsWithQuestions = async (req, res) => {
+    try {
+        const { modeId } = req.params;
+        if (!modeId) {
+            return res.status(400).json({ success: false, message: "يجب إرسال معرف المود" });
+        }
+
+        const mode = await evaluateModel.findById(modeId)
+            .populate({
+                path: "locationId",
+                select: "branchName",
+                model: BranchModel
+            })
+            .populate({
+                path: "createdBy",
+                select: "fullName",
+                model: Usermodel
+            })
+            .lean();
+
+        if (!mode) {
+            return res.status(404).json({ success: false, message: "المود غير موجود" });
+        }
+
+        const subGroups = await SubGroupModel.find({ _id: { $in: mode.subGroups } }).lean();
+
+        const subGroupData = await Promise.all(subGroups.map(async (subGroup) => {
+            const questionDocs = await QuestionModel.find({ subGroup: subGroup._id }).lean();
+            const allQuestions = questionDocs.flatMap(doc => doc.questions || []);
+            const evaluationIds = allQuestions.map(q => q.evaluation);
+
+            const evaluationsMap = await EvaluationModel.find({ _id: { $in: evaluationIds } })
+                .lean()
+                .then(evals => Object.fromEntries(evals.map(ev => [ev._id.toString(), ev])));
+
+            const filteredQuestions = allQuestions
+                .filter(q => evaluationsMap[q.evaluation?.toString()])
+                .map(q => ({
+                    questionText: q.questionText,
+                    evaluation: q.evaluation,
+                    _id: q._id
+                }));
+
+            return {
+                _id: subGroup._id,
+                name: subGroup.name,
+                questions: filteredQuestions
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            message: "✅ تم جلب البيانات بنجاح",
+            data: [{
+                managerName: mode.managerName,
+                date: mode.createdAt,
+                location: mode.locationId?.branchName || "غير محدد",
+                createdBy: mode.createdBy?.fullName || "غير معروف",
+                subGroups: subGroupData
+            }]
+        });
+
+    } catch (error) {
+        console.error("❌ خطأ أثناء جلب المجموعات والأسئلة:", error);
+        res.status(500).json({ success: false, message: "حدث خطأ في السيرفر" });
+    }
+};
+
