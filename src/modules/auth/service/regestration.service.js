@@ -1327,17 +1327,15 @@ export const getEvaluationResultsByMode = async (req, res) => {
             .populate("answers.createdBy", "fullName")
             .lean();
 
-        // هات كل الـ questionIds اللي موجودة في النتائج
+        // جلب جميع الأسئلة المطلوبة
         const allQuestionIds = results.flatMap(result =>
             result.answers.map(ans => ans.questionId)
         );
 
-        // هات كل الأسئلة (لو الأسئلة متخزنة في Document فيه array اسمها questions)
         const allQuestionDocs = await QuestionModel.find({
             "questions._id": { $in: allQuestionIds }
         }).lean();
 
-        // حضّر خريطة بالأسئلة
         const questionMap = {};
         for (const doc of allQuestionDocs) {
             for (const q of doc.questions) {
@@ -1345,12 +1343,23 @@ export const getEvaluationResultsByMode = async (req, res) => {
             }
         }
 
+        // تنسيق التاريخ
+        const formatDate = (date) => {
+            const d = new Date(date);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+        };
+
         const responseData = results.map(result => ({
             _id: result._id,
             modeTitle: result.modeId?.title,
             managerName: result.modeId?.managerName,
-            createdAt: result.createdAt,
-            percentage: result.percentage, // ✅ هانضيف دي هنا
+            percentage: result.percentage,
+            createdAt: formatDate(result.createdAt), // ✅ التاريخ بالتنسيق الجديد
             answers: result.answers.map(ans => ({
                 question: questionMap[ans.questionId?.toString()] || "❌ غير متوفر",
                 subGroup: ans.subGroupId?.name || "❌ غير معروف",
@@ -1358,7 +1367,6 @@ export const getEvaluationResultsByMode = async (req, res) => {
                 answeredBy: ans.createdBy?.fullName || "غير معروف"
             }))
         }));
-
 
         res.status(200).json({
             success: true,
@@ -1376,3 +1384,4 @@ export const getEvaluationResultsByMode = async (req, res) => {
         });
     }
 };
+
