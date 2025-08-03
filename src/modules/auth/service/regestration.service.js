@@ -1224,7 +1224,7 @@ export const getModeSubGroupsWithQuestions = async (req, res) => {
         const mode = await evaluateModel.findById(modeId)
             .populate({
                 path: "locationId",
-                select: "branchName",
+                select: "branchName _id",
                 model: BranchModel
             })
             .populate({
@@ -1271,6 +1271,7 @@ export const getModeSubGroupsWithQuestions = async (req, res) => {
                 managerName: mode.managerName,
                 date: mode.createdAt,
                 location: mode.locationId?.branchName || "غير محدد",
+                _id: mode.locationId?._id || "غير محدد",
                 createdBy: mode.createdBy?.fullName || "غير معروف",
                 subGroups: subGroupData
             }]
