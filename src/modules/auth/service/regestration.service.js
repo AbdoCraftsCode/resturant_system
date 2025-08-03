@@ -1285,7 +1285,7 @@ export const getModeSubGroupsWithQuestions = async (req, res) => {
 
 export const createEvaluationResult = async (req, res) => {
     try {
-        const { modeId, answers, percentage } = req.body;
+        const { modeId, answers, percentage, locationId } = req.body;
         const userId = req.user?._id;
 
         const updatedAnswers = answers.map(answer => ({
@@ -1295,6 +1295,7 @@ export const createEvaluationResult = async (req, res) => {
 
         const newResult = await EvaluationResult.create({
             modeId,
+            locationId,
             answers: updatedAnswers,
             createdBy: userId,
             percentage, // 🔥 النسبة مضافة هنا فقط لمرة واحدة
@@ -1316,18 +1317,17 @@ export const createEvaluationResult = async (req, res) => {
 
 
 
-
 export const getEvaluationResultsByMode = async (req, res) => {
     try {
-        const { modeId } = req.params;
+        const userId = req.user.id;
 
-        const results = await EvaluationResult.find({ modeId })
+        const results = await EvaluationResult.find({ createdBy: userId })
             .populate("modeId", "title managerName percentage")
             .populate("answers.subGroupId", "name")
             .populate("answers.createdBy", "fullName")
+            .populate("locationId", "branchName")
             .lean();
 
-        // جلب جميع الأسئلة المطلوبة
         const allQuestionIds = results.flatMap(result =>
             result.answers.map(ans => ans.questionId)
         );
@@ -1343,7 +1343,6 @@ export const getEvaluationResultsByMode = async (req, res) => {
             }
         }
 
-        // تنسيق التاريخ
         const formatDate = (date) => {
             const d = new Date(date);
             const yyyy = d.getFullYear();
@@ -1358,8 +1357,9 @@ export const getEvaluationResultsByMode = async (req, res) => {
             _id: result._id,
             modeTitle: result.modeId?.title,
             managerName: result.modeId?.managerName,
+            branchName: result.locationId?.branchName || "غير محدد",
             percentage: result.percentage,
-            createdAt: formatDate(result.createdAt), // ✅ التاريخ بالتنسيق الجديد
+            createdAt: formatDate(result.createdAt),
             answers: result.answers.map(ans => ({
                 question: questionMap[ans.questionId?.toString()] || "❌ غير متوفر",
                 subGroup: ans.subGroupId?.name || "❌ غير معروف",
@@ -1370,7 +1370,7 @@ export const getEvaluationResultsByMode = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "✅ تم جلب التقييمات بنجاح",
+            message: "✅ تم جلب التقييمات الخاصة بك بالتفصيل بنجاح",
             count: results.length,
             data: responseData
         });
@@ -1381,6 +1381,46 @@ export const getEvaluationResultsByMode = async (req, res) => {
             success: false,
             message: "❌ حدث خطأ أثناء جلب التقييمات",
             error: err.message
+        });
+    }
+};
+
+
+export const getMyEvaluationResults = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const evaluations = await EvaluationResult.find({ createdBy: userId })
+            .populate({
+                path: "locationId",
+                select: "branchName",
+                model: "Location" // ✅ تأكد من الاسم
+            })
+            .populate({
+                path: "createdBy",
+                select: "fullName",
+                model: "User" // ✅ تأكد من الاسم
+            })
+            .sort({ createdAt: -1 });
+
+        console.log("✅ Evaluations:", evaluations);
+
+        res.status(200).json({
+            success: true,
+            message: "تم جلب التقييمات الخاصة بك بنجاح",
+            count: evaluations.length,
+            data: evaluations.map(e => ({
+                fullName: e.createdBy?.fullName || "غير معروف",
+                percentage: e.percentage,
+                date: e.createdAt,
+                location: e.locationId?.branchName || "غير محدد",
+            }))
+        });
+    } catch (error) {
+        console.error("❌ خطأ أثناء جلب نتائج التقييم:", error);
+        res.status(500).json({
+            success: false,
+            message: "حدث خطأ في السيرفر"
         });
     }
 };

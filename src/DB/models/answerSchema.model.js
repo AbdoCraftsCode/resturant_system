@@ -38,6 +38,11 @@ const evaluationResultSchema = new mongoose.Schema({
         min: 0,
         max: 100
     },
+      locationId: {
+            type: mongoose.Schema.Types.ObjectId,
+          ref: "Branchhh", // عدل الاسم حسب اسم موديل الموقع
+            required: true,
+        },
     answers: [answerSchema],
 }, { timestamps: true });
 
