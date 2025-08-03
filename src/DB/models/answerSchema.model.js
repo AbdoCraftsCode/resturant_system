@@ -14,18 +14,10 @@ const answerSchema = new mongoose.Schema({
     answer: {
         type: String,
         enum: ["yes", "no"],
-     
     },
-      createdBy: {
+    createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-      
-      },
-    percentage: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100
     }
 });
 
@@ -39,6 +31,12 @@ const evaluationResultSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
+    },
+    percentage: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100
     },
     answers: [answerSchema],
 }, { timestamps: true });

@@ -1285,8 +1285,8 @@ export const getModeSubGroupsWithQuestions = async (req, res) => {
 
 export const createEvaluationResult = async (req, res) => {
     try {
-        const { modeId, answers } = req.body;
-        const userId = req.user?._id || "غير معروف"; // استخراج ID من التوكن
+        const { modeId, answers, percentage } = req.body;
+        const userId = req.user?._id;
 
         const updatedAnswers = answers.map(answer => ({
             ...answer,
@@ -1296,7 +1296,8 @@ export const createEvaluationResult = async (req, res) => {
         const newResult = await EvaluationResult.create({
             modeId,
             answers: updatedAnswers,
-            createdBy: userId, // لو كنت بتسجل مين أنشأ التقييم بالكامل
+            createdBy: userId,
+            percentage, // 🔥 النسبة مضافة هنا فقط لمرة واحدة
         });
 
         res.status(201).json({
@@ -1315,12 +1316,13 @@ export const createEvaluationResult = async (req, res) => {
 
 
 
+
 export const getEvaluationResultsByMode = async (req, res) => {
     try {
         const { modeId } = req.params;
 
         const results = await EvaluationResult.find({ modeId })
-            .populate("modeId", "title managerName")
+            .populate("modeId", "title managerName percentage")
             .populate("answers.subGroupId", "name")
             .populate("answers.createdBy", "fullName")
             .lean();
@@ -1348,14 +1350,15 @@ export const getEvaluationResultsByMode = async (req, res) => {
             modeTitle: result.modeId?.title,
             managerName: result.modeId?.managerName,
             createdAt: result.createdAt,
+            percentage: result.percentage, // ✅ هانضيف دي هنا
             answers: result.answers.map(ans => ({
                 question: questionMap[ans.questionId?.toString()] || "❌ غير متوفر",
                 subGroup: ans.subGroupId?.name || "❌ غير معروف",
                 answer: ans.answer,
-                percentage: ans.percentage,
                 answeredBy: ans.createdBy?.fullName || "غير معروف"
             }))
         }));
+
 
         res.status(200).json({
             success: true,
