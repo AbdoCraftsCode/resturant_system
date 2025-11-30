@@ -21,6 +21,10 @@ import { QuestionModel } from "../../../DB/models/question2Schema.model.js";
 import { EvaluationModel } from "../../../DB/models/evaluationStatusSchema.model.js";
 import evaluateModel from "../../../DB/models/evaluate.model.js";
 import EvaluationResult from "../../../DB/models/answerSchema.model.js";
+import { sendemail } from "../../../utlis/email/sendemail.js";
+import { nanoid, customAlphabet } from "nanoid";
+
+import { vervicaionemailtemplet } from "../../../utlis/temblete/vervication.email.js";
 dotenv.config();
 
 
@@ -98,6 +102,9 @@ export const signup = asyncHandelr(async (req, res, next) => {
     
     return successresponse(res, "User created successfully, OTP sent!", 201);
 });
+
+
+
 
 
 export const sendotpphone = asyncHandelr(async (req, res, next) => {
@@ -191,8 +198,66 @@ export const signupwithGmail = asyncHandelr(async (req, res, next) => {
     return successresponse(res, "Login successful", 200, { access_Token, refreshToken });
 });
 
+// export const registerRestaurant = asyncHandelr(async (req, res, next) => {
+//     const { fullName, email, phone,  subdomain, password } = req.body;
+
+//     // ✅ تحقق من تكرار subdomain و email
+//     const checkuser = await dbservice.findOne({
+//         model: Usermodel,
+//         filter: {
+//             $or: [{ subdomain }, { email }]
+//         }
+//     });
+
+//     if (checkuser) {
+//         if (checkuser.subdomain === subdomain) {
+//             return next(new Error("subdomain already exists", { cause: 400 }));
+//         }
+//         if (checkuser.email === email) {
+//             return next(new Error("email already exists", { cause: 400 }));
+//         }
+//     }
+
+//     // ✅ تشفير كلمة المرور
+//     const hashpassword = await generatehash({ planText: password });
+
+//     // ✅ إنشاء المستخدم الجديد
+//     const user = await dbservice.create({
+//         model: Usermodel,
+//         data: {
+//             fullName,
+//             password: hashpassword,
+//             email,
+//             phone,
+          
+//             subdomain
+//         }
+//     });
+
+//     // ✅ بناء الرابط الديناميكي تلقائيًا
+//     const restaurantLink = `https://morezk12.github.io/Restaurant-system/#/restaurant/${user.subdomain}`;
+
+//     // ✅ دمج كل البيانات داخل كائن واحد لأن دالتك بتتعامل مع message فقط
+//     const allData = {
+//         message: "User created successfully",
+//         id: user._id,
+//         fullName: user.fullName,
+//         email: user.email,
+//         phone: user.phone,
+//         // country: user.country,
+//         subdomain: user.subdomain,
+//         restaurantLink
+//     };
+//     Emailevent.emit("confirmemail", { email });
+//     // ✅ رجع كل البيانات داخل message عشان دالتك
+//     return successresponse(res, allData, 201);
+// });
+  
+
+
+
 export const registerRestaurant = asyncHandelr(async (req, res, next) => {
-    const { fullName, email, phone,  subdomain, password } = req.body;
+    const { fullName, email, phone, subdomain, password } = req.body;
 
     // ✅ تحقق من تكرار subdomain و email
     const checkuser = await dbservice.findOne({
@@ -222,13 +287,44 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
             password: hashpassword,
             email,
             phone,
-          
             subdomain
         }
     });
 
     // ✅ بناء الرابط الديناميكي تلقائيًا
     const restaurantLink = `https://morezk12.github.io/Restaurant-system/#/restaurant/${user.subdomain}`;
+
+    // ================================
+    // 🔥 إضافة إرسال OTP بالضبط زي signup 🔥
+    // ================================
+    try {
+        if (email) {
+            const otp = customAlphabet("0123456789", 6)();
+            const html = vervicaionemailtemplet({ code: otp });
+
+            const emailOTP = await generatehash({ planText: `${otp}` });
+            const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+            await Usermodel.updateOne(
+                { _id: user._id },
+                { emailOTP, otpExpiresAt, attemptCount: 0 }
+            );
+
+            await sendemail({
+                to: email,
+                subject: "Confirm Email",
+                text: "رمز التحقق الخاص بك",
+                html,
+            });
+
+            console.log(`📩 OTP تم إرساله إلى البريد: ${email}`);
+        }
+
+    } catch (error) {
+        console.error("❌ فشل في إرسال OTP:", error.message);
+        return next(new Error("فشل في إرسال رمز التحقق", { cause: 500 }));
+    }
+    // ================================
 
     // ✅ دمج كل البيانات داخل كائن واحد لأن دالتك بتتعامل مع message فقط
     const allData = {
@@ -237,15 +333,20 @@ export const registerRestaurant = asyncHandelr(async (req, res, next) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        // country: user.country,
         subdomain: user.subdomain,
         restaurantLink
     };
+
     Emailevent.emit("confirmemail", { email });
-    // ✅ رجع كل البيانات داخل message عشان دالتك
+
+    // ✅ رجع كل البيانات داخل message
     return successresponse(res, allData, 201);
 });
-  
+
+
+
+
+
 export const createBranch = asyncHandelr(async (req, res, next) => {
     const {
         branchCode,
