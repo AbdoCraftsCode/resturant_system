@@ -25,6 +25,7 @@ import { sendemail } from "../../../utlis/email/sendemail.js";
 import { nanoid, customAlphabet } from "nanoid";
 
 import { vervicaionemailtemplet } from "../../../utlis/temblete/vervication.email.js";
+import { RoleModel } from "../../../DB/models/roleSchema.js";
 dotenv.config();
 
 
@@ -755,6 +756,57 @@ export const createPermissions = asyncHandelr(async (req, res) => {
         permission: created
     });
 });
+
+
+
+export const createRole = asyncHandelr(async (req, res) => {
+    const { name, permissions, description } = req.body;
+
+    if (!name) {
+        res.status(400);
+        throw new Error("❌ يجب إدخال اسم الدور");
+    }
+
+    // تأكد أن الصلاحيات موجودة
+    const validPermissions = await PermissionModel.find({
+        _id: { $in: permissions }
+    });
+
+    if (validPermissions.length !== permissions.length) {
+        res.status(400);
+        throw new Error("❌ بعض الصلاحيات غير موجودة");
+    }
+
+    const role = await RoleModel.create({
+        name: name.toLowerCase().trim(),
+        permissions,
+        description
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء الدور",
+        role
+    });
+});
+
+// controllers/role.controller.js
+export const getAllRoles = asyncHandelr(async (req, res) => {
+    // جلب كل الـ Roles و populate للـ permissions
+    const roles = await RoleModel.find()
+        .populate({
+            path: "permissions",  // الاسم زي ما مكتوب في schema
+            select: "name description -_id" // تجيب الاسم والوصف فقط من كل صلاحية
+        });
+
+    res.status(200).json({
+        message: "✅ تم جلب كل الأدوار مع الصلاحيات",
+        roles
+    });
+});
+
+
+
+
 export const getAllPermissions = asyncHandelr(async (req, res) => {
     // const userId = req.user.id;
 
@@ -867,35 +919,114 @@ export const updatePermission = asyncHandelr(async (req, res) => {
 
 
 
+// export const createAdminUser = asyncHandelr(async (req, res) => {
+//     const createdBy = req.user.id;
+//     const {
+//         name, phone, email,password, branch,
+//         mainGroup, subGroup, permissions
+//     } = req.body;
+
+//     if (
+//         !name || !phone || !password ||
+//         !email ||
+//         !Array.isArray(branch) ||
+//         !Array.isArray(mainGroup) ||
+//         !Array.isArray(subGroup) ||
+//         !Array.isArray(permissions)
+//     ) {
+//         res.status(400);
+//         throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array");
+//     }
+
+
+
+
+//     const exists = await AdminUserModel.findOne({ email });
+//     if (exists) {
+//         res.status(400);
+//         throw new Error("❌ هذا الرقم مستخدم بالفعل");
+//     }
+
+//     // ✅ رفع الصورة من req.files.image[0]
+//     let uploadedImage = null;
+//     const imageFile = req.files?.image?.[0];
+//     if (imageFile) {
+//         const uploaded = await cloud.uploader.upload(imageFile.path, {
+//             folder: `adminUsers/${createdBy}`
+//         });
+//         uploadedImage = {
+//             secure_url: uploaded.secure_url,
+//             public_id: uploaded.public_id
+//         };
+//     }
+
+//     const admin = await AdminUserModel.create({
+//         name,
+//         phone,
+//         email,
+//         password,
+//         branch,
+//         mainGroup,
+//         subGroup,
+//         permissions,
+//         profileImage: uploadedImage,
+//         createdBy
+//     });
+
+//     res.status(201).json({
+//         message: "✅ تم إنشاء الأدمن بنجاح",
+//         admin: {
+//             _id: admin._id,
+//             name: admin.name,
+//             phone: admin.phone,
+//             branch: admin.branch,
+//             email: admin.email,
+//             profileImage: admin.profileImage,
+//             permissions: admin.permissions
+//         }
+//     });
+// });
+
+
+
+
+
 export const createAdminUser = asyncHandelr(async (req, res) => {
     const createdBy = req.user.id;
     const {
-        name, phone, email,password, branch,
-        mainGroup, subGroup, permissions
+        name,
+        phone,
+        email,
+        password,
+        branch,
+        mainGroup,
+        subGroup,
+        roleId // الآن هذا الحقل فقط
     } = req.body;
 
     if (
-        !name || !phone || !password ||
-        !email ||
-        !Array.isArray(branch) ||
-        !Array.isArray(mainGroup) ||
-        !Array.isArray(subGroup) ||
-        !Array.isArray(permissions)
+        !name || !phone || !password || !email ||
+        !Array.isArray(branch) || !Array.isArray(mainGroup) || !Array.isArray(subGroup) ||
+        !roleId
     ) {
         res.status(400);
-        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array");
+        throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع في صورة Array ويجب إدخال roleId");
     }
-
-
-
 
     const exists = await AdminUserModel.findOne({ email });
     if (exists) {
         res.status(400);
-        throw new Error("❌ هذا الرقم مستخدم بالفعل");
+        throw new Error("❌ هذا البريد مستخدم بالفعل");
     }
 
-    // ✅ رفع الصورة من req.files.image[0]
+    // تحقق من وجود الدور
+    const role = await RoleModel.findById(roleId);
+    if (!role) {
+        res.status(404);
+        throw new Error("❌ هذا الدور غير موجود");
+    }
+
+    // رفع الصورة إذا موجودة
     let uploadedImage = null;
     const imageFile = req.files?.image?.[0];
     if (imageFile) {
@@ -908,6 +1039,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         };
     }
 
+    // إنشاء الأدمن مع roleId فقط
     const admin = await AdminUserModel.create({
         name,
         phone,
@@ -916,7 +1048,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         branch,
         mainGroup,
         subGroup,
-        permissions,
+        role: roleId,
         profileImage: uploadedImage,
         createdBy
     });
@@ -927,18 +1059,16 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
             _id: admin._id,
             name: admin.name,
             phone: admin.phone,
-            branch: admin.branch,
             email: admin.email,
+            branch: admin.branch,
             profileImage: admin.profileImage,
-            permissions: admin.permissions
+            role: {
+                _id: role._id,
+                name: role.name
+            }
         }
     });
 });
-
-
-
-
-
 
 export const getAllAdminUsers = asyncHandelr(async (req, res) => {
     const createdBy = req.user.id;

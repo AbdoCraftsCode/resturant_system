@@ -47,6 +47,12 @@ const adminUserSchema = new mongoose.Schema({
         ref: "Permission"
     }],
 
+    role: { // الحقل الجديد
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Role",
+        required: true
+    },
+
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User", // صاحب المطعم اللي أنشأ الأدمن

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createEvaluation, createEvaluationResult, createMainGroup, createMode, createPermissions, createQuestion, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getBranches, getEvaluationResultsByMode, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getModeSubGroupsWithQuestions, getMyEvaluationResults, getMyEvaluations, getMySubGroups, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createEvaluation, createEvaluationResult, createMainGroup, createMode, createPermissions, createQuestion, createRole, createSubGroup, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getAllRoles, getBranches, getEvaluationResultsByMode, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getModeSubGroupsWithQuestions, getMyEvaluationResults, getMyEvaluations, getMySubGroups, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -66,6 +66,9 @@ routr.get("/getModeSubGroupsWithQuestions/:modeId", getModeSubGroupsWithQuestion
 routr.post("/createMode",authentication(), createMode)
 routr.post("/createQuestion", authentication(), createQuestion)
 routr.post("/getMyEvaluations", authentication(), getMyEvaluations)
+routr.post("/createRole",  createRole)
+
+routr.get("/getAllRoles", getAllRoles)
 routr.get("/getMyEvaluationResults", authentication(), getMyEvaluationResults)
 routr.get("/getMySubGroups", authentication(), getMySubGroups)
 routr.delete("/deleteSingleQuestion/:mainId/:questionId", deleteSingleQuestion)
