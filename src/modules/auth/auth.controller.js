@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validation } from "../../middlewere/validation.middlewere.js";
 import  * as validators from "../auth/auth.validate.js"
-import { confirmOTP, createAdminUser, createBranch, createEvaluation, createEvaluationResult, createMainGroup, createMode, createPermissions, createQuestion, createRole, createSubGroup, createTask, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getAllRoles, getBranches, getEvaluationResultsByMode, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getModeSubGroupsWithQuestions, getMyEvaluationResults, getMyEvaluations, getMySubGroups, getMyTasks, getQuestionsByMainGroups, getSubGroupsByMainGroup, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
+import { confirmOTP, createAdminUser, createBranch, createEvaluation, createEvaluationResult, createMainGroup, createMode, createPermissions, createQuestion, createRole, createSubGroup, createTask, createTaskUser, deleteAdminUser, deleteBranch, deleteMainGroup, deletePermission, deleteSingleQuestion, deleteSubGroup, getAllAdminUsers, getAllPermissions, getAllRoles, getBranches, getEvaluationResultsByMode, getEvaluations, getMainGroupsForUser, getMainGroupsWithSubGroups, getModeSubGroupsWithQuestions, getMyEvaluationResults, getMyEvaluations, getMySubGroups, getMyTasks, getQuestionsByMainGroups, getSubGroupsByMainGroup, getTasksByUser, registerRestaurant, sendotpphone, signup, signupwithGmail, updateAdminUser, updateBranch, updateMainGroup, updatePermission, updateSingleQuestion, updateSubGroup,  } from "./service/regestration.service.js";
 import { deleteMyAccount, forgetpassword,   forgetPasswordphone,   forgetPasswordphoneadmin,   login, loginRestaurant, loginwithGmail, refreshToken, resendOTP, resetpassword, resetPasswordphone, verifyOTP } from "./service/authontecation.service.js";
 import { authentication } from "../../middlewere/authontcation.middlewere.js";
 
@@ -66,6 +66,8 @@ routr.get("/getModeSubGroupsWithQuestions/:modeId", getModeSubGroupsWithQuestion
 routr.post("/createMode",authentication(), createMode)
 routr.post("/createQuestion", authentication(), createQuestion)
 routr.post("/getMyEvaluations", authentication(), getMyEvaluations)
+
+
 routr.post("/createRole",  createRole)
 
 routr.get("/getAllRoles", getAllRoles)
@@ -91,6 +93,16 @@ routr.post("/createAdminUser",
     createAdminUser
 );
 
+routr.post("/createTaskUser",
+    authentication(),
+    uploadCloudFile(fileValidationTypes.image).fields([
+        { name: "image", maxCount: 1 } // ✅ صورة واحدة فقط
+    ]),
+    createTaskUser
+);
+
+
+
 
 routr.patch("/updateAdminUser/:id",
     authentication(),
@@ -102,4 +114,8 @@ routr.patch("/updateAdminUser/:id",
 
 
 routr.get("/getAllAdminUsers", authentication(), getAllAdminUsers)
+
+
+routr.get("/getTasksByUser/:userId", authentication(), getTasksByUser)
+
 export default routr

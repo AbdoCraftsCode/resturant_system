@@ -27,6 +27,7 @@ import { nanoid, customAlphabet } from "nanoid";
 import { vervicaionemailtemplet } from "../../../utlis/temblete/vervication.email.js";
 import { RoleModel } from "../../../DB/models/roleSchema.js";
 import { TaskModel } from "../../../DB/models/taskSchema.js";
+import { Taskkk } from "../../../DB/models/taskSchemaaa.js";
 dotenv.config();
 
 
@@ -1097,6 +1098,72 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         }
     });
 });
+
+
+
+
+
+
+export const createTaskUser = asyncHandelr(async (req, res) => {
+    const createdBy = req.user.id;
+    const { title, note } = req.body;
+
+    if (!title) {
+        res.status(400);
+        throw new Error("❌ العنوان مطلوب");
+    }
+
+    let uploadedImage = null;
+
+    // لاحظ هنا 👇
+    const imageFile = req.files?.image?.[0];
+
+    if (imageFile) {
+        const uploaded = await cloud.uploader.upload(imageFile.path, {
+            folder: `tasks/${createdBy}`
+        });
+
+        uploadedImage = {
+            secure_url: uploaded.secure_url,
+            public_id: uploaded.public_id
+        };
+    }
+
+    const task = await Taskkk.create({
+        title,
+        note,
+        profileImage: uploadedImage,
+        createdBy
+    });
+
+    res.status(201).json({
+        message: "✅ تم إنشاء التاسك بنجاح",
+        task
+    });
+});
+
+
+
+
+export const getTasksByUser = asyncHandelr(async (req, res) => {
+    const userId = req.params.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        res.status(400);
+        throw new Error("❌ userId غير صالح");
+    }
+
+    const tasks = await Taskkk.find({ createdBy: userId })
+        .sort({ createdAt: -1 }); // الأحدث أولاً
+
+    res.status(200).json({
+        success: true,
+        count: tasks.length,
+        tasks
+    });
+});
+
+
 
 export const getMyTasks = asyncHandelr(async (req, res) => {
     const userEmail = req.user.email; // جاي من التوكن
