@@ -33,7 +33,11 @@ const adminUserSchema = new mongoose.Schema({
         ref: "MainGroup",
         // required: true
     }],
-
+    userId: {                         // ← هنا الإضافة الجديدة
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
 
     subGroup: [{
         type: mongoose.Schema.Types.ObjectId,

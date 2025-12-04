@@ -26,6 +26,7 @@ import { nanoid, customAlphabet } from "nanoid";
 
 import { vervicaionemailtemplet } from "../../../utlis/temblete/vervication.email.js";
 import { RoleModel } from "../../../DB/models/roleSchema.js";
+import { TaskModel } from "../../../DB/models/taskSchema.js";
 dotenv.config();
 
 
@@ -990,10 +991,11 @@ export const updatePermission = asyncHandelr(async (req, res) => {
 
 
 
+// جدول المستخدمين العاديين
 
 export const createAdminUser = asyncHandelr(async (req, res) => {
     const createdBy = req.user.id;
-    const {
+    let {
         name,
         phone,
         email,
@@ -1001,20 +1003,31 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         branch,
         mainGroup,
         subGroup,
-        roleId // الآن هذا الحقل فقط
+        roleId
     } = req.body;
 
-    if (
-        !name || !phone || !password || !email ||
-        !Array.isArray(branch) || !Array.isArray(mainGroup) || !Array.isArray(subGroup) ||
-        !roleId
-    ) {
+    // تحويل strings إلى array لو لزم
+    try {
+        branch = typeof branch === "string" ? JSON.parse(branch) : branch;
+        mainGroup = typeof mainGroup === "string" ? JSON.parse(mainGroup) : mainGroup;
+        subGroup = typeof subGroup === "string" ? JSON.parse(subGroup) : subGroup;
+    } catch (error) {
+        res.status(400);
+        throw new Error("❌ فشل تحويل الفروع والمجموعات من JSON إلى Array");
+    }
+
+    // 🔥 اطبع كل البيانات
+    console.log("🚀 Incoming Data:", { name, phone, email, password, branch, mainGroup, subGroup, roleId, files: req.files });
+
+    // التحقق من صحة البيانات
+    if (!name || !phone || !password || !email || !Array.isArray(branch) || !Array.isArray(mainGroup) || !Array.isArray(subGroup) || !roleId) {
         res.status(400);
         throw new Error("❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع في صورة Array ويجب إدخال roleId");
     }
 
-    const exists = await AdminUserModel.findOne({ email });
-    if (exists) {
+    // تحقق من وجود البريد في جدول الأدمن
+    const existsAdmin = await AdminUserModel.findOne({ email });
+    if (existsAdmin) {
         res.status(400);
         throw new Error("❌ هذا البريد مستخدم بالفعل");
     }
@@ -1039,22 +1052,37 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
         };
     }
 
-    // إنشاء الأدمن مع roleId فقط
+    // تشفير كلمة المرور قبل التخزين في جدول المستخدمين
+    const hashedPassword = await generatehash({ planText: password });
+
+    // إنشاء المستخدم في جدول User (لتسجيل الدخول العادي)
+    const user = await Usermodel.create({
+        fullName: name,
+        email,
+        password: hashedPassword,
+        phone
+    });
+
+    // إنشاء الأدمن
     const admin = await AdminUserModel.create({
         name,
         phone,
         email,
-        password,
+        password, // لو عايز تشفير هنا كمان ممكن تستخدم hashedPassword بدل password
         branch,
         mainGroup,
         subGroup,
         role: roleId,
         profileImage: uploadedImage,
+        userId: user._id,
         createdBy
     });
 
+    console.log("✅ Admin Created:", admin);
+    console.log("✅ User Created for login:", user);
+
     res.status(201).json({
-        message: "✅ تم إنشاء الأدمن بنجاح",
+        message: "✅ تم إنشاء الأدمن وتخزينه كمستخدم لتسجيل الدخول بنجاح",
         admin: {
             _id: admin._id,
             name: admin.name,
@@ -1070,14 +1098,39 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
     });
 });
 
+export const getMyTasks = asyncHandelr(async (req, res) => {
+    const userEmail = req.user.email; // جاي من التوكن
+
+    // جلب الـ userId بناءً على الايميل
+    const user = await Usermodel.findOne({ email: userEmail });
+    if (!user) {
+        res.status(404);
+        throw new Error("❌ المستخدم غير موجود");
+    }
+
+    // جلب المهام المخصصة لهذا المستخدم
+    const tasks = await TaskModel.find({ assignedTo: user._id })
+        .populate("assignedTo", "fullName email phone") // جلب بيانات الموظف
+        .populate("createdBy", "fullName email")       // جلب بيانات الشخص الذي أضاف المهمة
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: tasks.length,
+        tasks
+    });
+});
+
+
 export const getAllAdminUsers = asyncHandelr(async (req, res) => {
     const createdBy = req.user.id;
 
     const admins = await AdminUserModel.find({ createdBy })
-        .populate("branch", "branchName")        // فك اسم الفرع
-        .populate("mainGroup", "name")           // فك اسم المجموعة الرئيسية
-        .populate("subGroup", "name")            // فك اسم المجموعة الفرعية
-        .populate("permissions", "name description"); // فك الصلاحيات
+        .populate("branch", "branchName")
+        .populate("mainGroup", "name")
+        .populate("subGroup", "name")
+        .populate("permissions", "name description")
+        .populate("userId", "fullName email phone"); // ← هنا بنجيب بياناته من users
 
     res.status(200).json({
         message: "✅ الأدمنات التابعين لك",
@@ -1085,6 +1138,15 @@ export const getAllAdminUsers = asyncHandelr(async (req, res) => {
         admins
     });
 });
+
+
+
+
+
+
+
+
+
 
 export const getSubGroupsByMainGroup = asyncHandelr(async (req, res, next) => {
     const userId = req.user.id;
@@ -1657,3 +1719,32 @@ export const getMyEvaluationResults = async (req, res) => {
     }
 };
 
+
+
+// إنشاء مهمة جديدة
+export const createTask = asyncHandelr(async (req, res, next) => {
+    const { assignedTo, message, fromTime, toTime } = req.body;
+
+    // التحقق من البيانات المطلوبة
+    if (!assignedTo || !message || !fromTime || !toTime) {
+        return res.status(400).json({
+            success: false,
+            message: "جميع الحقول مطلوبة: assignedTo, message, fromTime, toTime"
+        });
+    }
+
+    // إنشاء المهمة
+    const task = await TaskModel.create({
+        assignedTo,
+        message,
+        fromTime: new Date(fromTime),
+        toTime: new Date(toTime),
+        createdBy: req.user.id
+    });
+
+    return res.status(201).json({
+        success: true,
+        message: "تم إنشاء المهمة بنجاح",
+        data: task
+    });
+});

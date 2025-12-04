@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
         email: { type: String, required: true, unique: true, trim: true },
         phone: { type: String, required: true, trim: true },
   
-        subdomain: { type: String, required: true, unique: true, trim: true },
+        subdomain: { type: String,   trim: true },
         domain: { type: String, },
         password: { type: String, },
         updatedBy: {
